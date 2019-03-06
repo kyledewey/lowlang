@@ -10,6 +10,13 @@ import java.io.BufferedWriter;
 import java.io.PrintWriter;
 import java.io.IOException;
 
+// MIPS documentation:
+// - MIPS reference card: https://inst.eecs.berkeley.edu/~cs61c/resources/MIPS_Green_Sheet.pdf
+// - MIPS system calls: https://www.doc.ic.ac.uk/lab/secondyear/spim/node8.html
+//
+// You will need SPIM (http://spimsimulator.sourceforge.net/) installed to run this; spim is
+// usually available as a binary package though your distribution / Homebrew
+//
 public class MIPSCodeGenerator {
     private final List<MIPSInstruction> instructions;
 
