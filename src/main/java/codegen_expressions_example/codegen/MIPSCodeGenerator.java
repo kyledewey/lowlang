@@ -19,7 +19,7 @@ public class MIPSCodeGenerator {
 
     public void add(final MIPSInstruction i) {
         instructions.add(i);
-    }
+    } // add
 
     // pushes the contents of this register onto the stack
     public void push(final MIPSRegister register) {
@@ -30,6 +30,16 @@ public class MIPSCodeGenerator {
         add(new Sw(register, 0, sp));
     } // push
 
+    // uses $t0 as a temp
+    public void pushValue(final int value) {
+        pushValue(MIPSRegister.T0, value);
+    } // pushValue
+    
+    public void pushValue(final MIPSRegister temp, final int value) {
+        add(new Li(temp, value));
+        push(temp);
+    } // pushValue
+    
     // pops top element of the stack into this register
     public void pop(final MIPSRegister register) {
         // lw register, 0($sp)
@@ -41,19 +51,36 @@ public class MIPSCodeGenerator {
     
     public void compileIntExp(final IntExp exp) {
         // push this integer onto the stack
-        final MIPSRegister t0 = MIPSRegister.T0;
-        add(new Li(t0, exp.value));
-        push(t0);
+        pushValue(exp.value);
     } // compileIntExp
 
     // boolean: integer that's 0 (false), or 1 (true)
     public void compileBoolExp(final BoolExp exp) {
-        final MIPSRegister t0 = MIPSRegister.T0;
-        final int value = (exp.value) ? 1 : 0;
-        add(new Li(t0, value));
-        push(t0);
+        pushValue((exp.value) ? 1 : 0);
     } // compileBoolExp
 
+    // char: integer in the range for a char
+    public void compileCharExp(final CharExp exp) {
+        pushValue((int)exp.value);
+    } // compileCharExp
+
+    // for simplicity, bools and chars are 4 bytes
+    public static int sizeof(final Type type) {
+        if (type instanceof IntType ||
+            type instanceof BoolType ||
+            type instanceof CharType ||
+            type instanceof PointerType) { // 32-bit word
+            return 4;
+        } else {
+            assert(false);
+            return 0;
+        }
+    } // sizeof
+
+    public void compileSizeof(final SizeofExp exp) {
+        pushValue(sizeof(exp.type));
+    } // compileSizeof
+    
     public void compileOp(final MIPSRegister destination,
                           final MIPSRegister left,
                           final Op op,
@@ -96,8 +123,12 @@ public class MIPSCodeGenerator {
             compileIntExp((IntExp)exp);
         } else if (exp instanceof BoolExp) {
             compileBoolExp((BoolExp)exp);
+        } else if (exp instanceof CharExp) {
+            compileCharExp((CharExp)exp);
         } else if (exp instanceof BinopExp) {
             compileBinopExp((BinopExp)exp);
+        } else if (exp instanceof SizeofExp) {
+            compileSizeof((SizeofExp)exp);
         } else {
             assert(false);
         }

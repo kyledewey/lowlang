@@ -100,5 +100,25 @@ public class MIPSCodeGeneratorTest {
                                      new DivOp(),
                                      new IntExp(2)));
     }
+
+    @Test
+    public void testSizeofInt() throws IOException {
+        assertResult(4, new SizeofExp(new IntType()));
+    }
+
+    @Test
+    public void testSizeofBool() throws IOException {
+        assertResult(4, new SizeofExp(new BoolType()));
+    }
+
+    @Test
+    public void testSizeofChar() throws IOException {
+        assertResult(4, new SizeofExp(new CharType()));
+    }
+
+    @Test
+    public void testSizeofPointer() throws IOException {
+        assertResult(4, new SizeofExp(new PointerType(new IntType())));
+    }
 } // MIPSCodeGeneratorTest
 
