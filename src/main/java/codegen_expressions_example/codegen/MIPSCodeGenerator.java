@@ -2,8 +2,11 @@ package codegen_expressions_example.codegen;
 
 import codegen_expressions_example.syntax.*;
 
+import java.util.Map;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.ArrayList;
+
 import java.io.File;
 import java.io.FileWriter;
 import java.io.BufferedWriter;
@@ -18,11 +21,34 @@ import java.io.IOException;
 // usually available as a binary package though your distribution / Homebrew
 //
 public class MIPSCodeGenerator {
+    private final Map<StructureName, LinkedHashMap<FieldName, Type>> structDecs;
     private final List<MIPSInstruction> instructions;
 
-    public MIPSCodeGenerator() {
+    public MIPSCodeGenerator(final Map<StructureName, LinkedHashMap<FieldName, Type>> structDecs) {
+        this.structDecs = structDecs;
         instructions = new ArrayList<MIPSInstruction>();
     }
+
+    // for simplicity, bools and chars are 4 bytes
+    public int sizeof(final Type type) {
+        if (type instanceof IntType ||
+            type instanceof BoolType ||
+            type instanceof CharType ||
+            type instanceof PointerType) { // 32-bit word
+            return 4;
+        } else if (type instanceof StructureType) {
+            final LinkedHashMap<FieldName, Type> fields =
+                structDecs.get(((StructureType)type).name);
+            int sum = 0;
+            for (final Type fieldType : fields.values()) {
+                sum += sizeof(fieldType);
+            }
+            return sum;
+        } else {
+            assert(false);
+            return 0;
+        }
+    } // sizeof
 
     public void add(final MIPSInstruction i) {
         instructions.add(i);
@@ -71,19 +97,6 @@ public class MIPSCodeGenerator {
         pushValue((int)exp.value);
     } // compileCharExp
 
-    // for simplicity, bools and chars are 4 bytes
-    public static int sizeof(final Type type) {
-        if (type instanceof IntType ||
-            type instanceof BoolType ||
-            type instanceof CharType ||
-            type instanceof PointerType) { // 32-bit word
-            return 4;
-        } else {
-            assert(false);
-            return 0;
-        }
-    } // sizeof
-
     public void compileSizeofExp(final SizeofExp exp) {
         pushValue(sizeof(exp.type));
     } // compileSizeof
@@ -107,19 +120,33 @@ public class MIPSCodeGenerator {
     } // compileCastExp
 
     public void compileDereferenceExp(final DereferenceExp exp) {
-        // since everything is currently 4 bytes large, this isn't too bad
-
+        // since structures have differing size, this can push multiple values
+        // on the stack.  Additionally, we need to know what the type of the
+        // expression is (thanks typechecker!), which will tell us how much
+        // to load in
+        final int loadSize = sizeof(exp.getExpType());
+        assert(loadSize >= 0);
+        assert(loadSize % 4 == 0); // we load one word (4 bytes) at a time
+        
         // memory address is on top of stack
         compileExpression(exp.exp);
 
         // this address is now in $t0
-        pop(MIPSRegister.T0);
+        final MIPSRegister t0 = MIPSRegister.T0;
+        pop(t0);
 
-        // load in whatever is at this address, putting into $t1
-        add(new Lw(MIPSRegister.T1, 0, MIPSRegister.T0));
+        // allocate space on the stack for everything
+        final MIPSRegister sp = MIPSRegister.SP;        
+        add(new Addi(sp, sp, -loadSize));
 
-        // push this onto the stack
-        push(MIPSRegister.T1);
+        // load in from this address, one word at a time.
+        // $t1 is used to read in / write out words.
+        // first value of structure will be at offset N, next at N - 4, ... until 0
+        final MIPSRegister t1 = MIPSRegister.T1;
+        for (int offset = loadSize - 4; offset >= 0; offset -= 4) {
+            add(new Lw(t1, offset, t0));
+            add(new Sw(t1, offset, sp));
+        }
     } // compileDereferenceExp
     
     public void compileOp(final MIPSRegister destination,
@@ -218,17 +245,5 @@ public class MIPSCodeGenerator {
             output.close();
         }
     } // writeCompleteFile
-
-    public static void writeExpressionToFile(final Exp exp, final File file) throws IOException {
-        final MIPSCodeGenerator gen = new MIPSCodeGenerator();
-        gen.compileExpression(exp);
-        gen.writeCompleteFile(file);
-    } // writeExpressionToFile
-
-    public static void main(String[] args) throws IOException {
-        // 1 + 2
-        final Exp exp = new BinopExp(new IntExp(1), new PlusOp(), new IntExp(2));
-        writeExpressionToFile(exp, new File("test.asm"));
-    } // main
 } // MIPSCodeGenerator
 

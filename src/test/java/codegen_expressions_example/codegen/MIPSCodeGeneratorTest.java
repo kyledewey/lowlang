@@ -2,6 +2,9 @@ package codegen_expressions_example.codegen;
 
 import codegen_expressions_example.syntax.*;
 
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+
 import java.io.File;
 import java.io.IOException;
 
@@ -18,7 +21,10 @@ public class MIPSCodeGeneratorTest {
     public void assertResult(final int expected, final Exp exp) throws IOException {
         final File file = File.createTempFile("test", ".asm");
         try {
-            MIPSCodeGenerator.writeExpressionToFile(exp, file);
+            final MIPSCodeGenerator gen =
+                new MIPSCodeGenerator(new HashMap<StructureName, LinkedHashMap<FieldName, Type>>());
+            gen.compileExpression(exp);
+            gen.writeCompleteFile(file);
             final String[] output = SPIMRunner.runFile(file);
             assertEquals(expected, parseOutput(output));
         } finally {
@@ -135,7 +141,10 @@ public class MIPSCodeGeneratorTest {
     @Test
     public void testDereference() throws IOException {
         // TODO: this is very bad; assumes initial value of allocated memory
-        assertResult(0, new DereferenceExp(new MallocExp(new IntExp(4))));
+        final DereferenceExp exp =
+            new DereferenceExp(new MallocExp(new IntExp(4)));
+        exp.setExpType(new PointerType(new IntType()));
+        assertResult(0, exp);
     }
 } // MIPSCodeGeneratorTest
 
