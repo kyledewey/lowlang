@@ -126,5 +126,10 @@ public class MIPSCodeGeneratorTest {
         // TODO: this is very bad; assumes memory address
         assertResult(268566528, new MallocExp(new IntExp(4)));
     }
+
+    @Test
+    public void testCast() throws IOException {
+        assertResult((int)'a', new CastExp(new IntType(), new CharExp('a')));
+    }
 } // MIPSCodeGeneratorTest
 

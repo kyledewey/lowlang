@@ -95,6 +95,16 @@ public class MIPSCodeGenerator {
         add(new Syscall());
         push(MIPSRegister.V0);
     } // compileMallocExp
+
+    // This language just passes it along and blindly assumes
+    // Depending, on the language, this might do something more
+    // clever, like:
+    // - Do some conversion (e.g., double -> int)
+    // - Emit code that checks at runtime that the type makes sense
+    //
+    public void compileCastExp(final CastExp exp) {
+        compileExpression(exp.exp);
+    } // compileCastExp
     
     public void compileOp(final MIPSRegister destination,
                           final MIPSRegister left,
@@ -146,6 +156,8 @@ public class MIPSCodeGenerator {
             compileSizeofExp((SizeofExp)exp);
         } else if (exp instanceof MallocExp) {
             compileMallocExp((MallocExp)exp);
+        } else if (exp instanceof CastExp) {
+            compileCastExp((CastExp)exp);
         } else {
             assert(false);
         }
