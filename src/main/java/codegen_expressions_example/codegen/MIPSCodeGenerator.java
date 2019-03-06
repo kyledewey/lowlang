@@ -85,8 +85,8 @@ public class MIPSCodeGenerator {
         compileExpression(exp.right);
         final MIPSRegister t0 = MIPSRegister.T0;
         final MIPSRegister t1 = MIPSRegister.T1;
-        pop(t0);
-        pop(t1);
+        pop(t1); // right is on top of the stack...
+        pop(t0); // followed by left
         compileOp(t0, t0, exp.op, t1);
         push(t0);
     } // compileBinopExp

@@ -30,5 +30,75 @@ public class MIPSCodeGeneratorTest {
     public void testIntLiteral() throws IOException {
         assertResult(1, new IntExp(1));
     }
+
+    @Test
+    public void testBoolLiteralTrue() throws IOException {
+        assertResult(1, new BoolExp(true));
+    }
+
+    @Test
+    public void testBoolLiteralFalse() throws IOException {
+        assertResult(0, new BoolExp(false));
+    }
+
+    @Test
+    public void testEqualsIntTrue() throws IOException {
+        assertResult(1, new BinopExp(new IntExp(42),
+                                     new EqualsOp(),
+                                     new IntExp(42)));
+    }
+
+    @Test
+    public void testEqualsIntFalse() throws IOException {
+        assertResult(0, new BinopExp(new IntExp(42),
+                                     new EqualsOp(),
+                                     new IntExp(43)));
+    }
+
+    @Test
+    public void testEqualsBoolTrue() throws IOException {
+        assertResult(1, new BinopExp(new BoolExp(false),
+                                     new EqualsOp(),
+                                     new BoolExp(false)));
+    }
+
+    @Test
+    public void testEqualsBoolFalse() throws IOException {
+        assertResult(0, new BinopExp(new BoolExp(true),
+                                     new EqualsOp(),
+                                     new BoolExp(false)));
+    }
+
+    @Test
+    public void testPlus() throws IOException {
+        // 2 + 3 = 5
+        assertResult(5, new BinopExp(new IntExp(2),
+                                     new PlusOp(),
+                                     new IntExp(3)));
+    }
+
+    @Test
+    public void testMinus() throws IOException {
+        // 3 - 2 = 1
+        assertResult(1, new BinopExp(new IntExp(3),
+                                     new MinusOp(),
+                                     new IntExp(2)));
+    }
+
+    @Test
+    public void testMult() throws IOException {
+        // 3 * 4 = 12
+        assertResult(12, new BinopExp(new IntExp(3),
+                                      new MultOp(),
+                                      new IntExp(4)));
+    }
+
+    @Test
+    public void testDiv() throws IOException {
+        // 6 / 2 = 3
+        assertResult(3, new BinopExp(new IntExp(6),
+                                     new DivOp(),
+                                     new IntExp(2)));
+    }
 } // MIPSCodeGeneratorTest
 
