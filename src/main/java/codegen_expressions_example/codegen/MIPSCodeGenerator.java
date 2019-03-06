@@ -105,6 +105,22 @@ public class MIPSCodeGenerator {
     public void compileCastExp(final CastExp exp) {
         compileExpression(exp.exp);
     } // compileCastExp
+
+    public void compileDereferenceExp(final DereferenceExp exp) {
+        // since everything is currently 4 bytes large, this isn't too bad
+
+        // memory address is on top of stack
+        compileExpression(exp.exp);
+
+        // this address is now in $t0
+        pop(MIPSRegister.T0);
+
+        // load in whatever is at this address, putting into $t1
+        add(new Lw(MIPSRegister.T1, 0, MIPSRegister.T0));
+
+        // push this onto the stack
+        push(MIPSRegister.T1);
+    } // compileDereferenceExp
     
     public void compileOp(final MIPSRegister destination,
                           final MIPSRegister left,
@@ -158,6 +174,8 @@ public class MIPSCodeGenerator {
             compileMallocExp((MallocExp)exp);
         } else if (exp instanceof CastExp) {
             compileCastExp((CastExp)exp);
+        } else if (exp instanceof DereferenceExp) {
+            compileDereferenceExp((DereferenceExp)exp);
         } else {
             assert(false);
         }

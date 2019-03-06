@@ -131,5 +131,11 @@ public class MIPSCodeGeneratorTest {
     public void testCast() throws IOException {
         assertResult((int)'a', new CastExp(new IntType(), new CharExp('a')));
     }
+
+    @Test
+    public void testDereference() throws IOException {
+        // TODO: this is very bad; assumes initial value of allocated memory
+        assertResult(0, new DereferenceExp(new MallocExp(new IntExp(4))));
+    }
 } // MIPSCodeGeneratorTest
 
