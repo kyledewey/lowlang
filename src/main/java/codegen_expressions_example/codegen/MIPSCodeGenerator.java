@@ -141,7 +141,7 @@ public class MIPSCodeGenerator {
         }
     } // writeCompleteFile
 
-    public static void writeExpressionToFile(final File file, final Exp exp) throws IOException {
+    public static void writeExpressionToFile(final Exp exp, final File file) throws IOException {
         final MIPSCodeGenerator gen = new MIPSCodeGenerator();
         gen.compileExpression(exp);
         gen.writeCompleteFile(file);
@@ -150,7 +150,7 @@ public class MIPSCodeGenerator {
     public static void main(String[] args) throws IOException {
         // 1 + 2
         final Exp exp = new BinopExp(new IntExp(1), new PlusOp(), new IntExp(2));
-        writeExpressionToFile(new File("test.asm"), exp);
+        writeExpressionToFile(exp, new File("test.asm"));
     } // main
 } // MIPSCodeGenerator
 
