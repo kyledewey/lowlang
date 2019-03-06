@@ -120,5 +120,11 @@ public class MIPSCodeGeneratorTest {
     public void testSizeofPointer() throws IOException {
         assertResult(4, new SizeofExp(new PointerType(new IntType())));
     }
+
+    @Test
+    public void testMalloc() throws IOException {
+        // TODO: this is very bad; assumes memory address
+        assertResult(268566528, new MallocExp(new IntExp(4)));
+    }
 } // MIPSCodeGeneratorTest
 

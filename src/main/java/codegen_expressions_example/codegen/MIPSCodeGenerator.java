@@ -77,9 +77,17 @@ public class MIPSCodeGenerator {
         }
     } // sizeof
 
-    public void compileSizeof(final SizeofExp exp) {
+    public void compileSizeofExp(final SizeofExp exp) {
         pushValue(sizeof(exp.type));
     } // compileSizeof
+
+    public void compileMallocExp(final MallocExp exp) {
+        compileExpression(exp.amount);
+        pop(MIPSRegister.A0);
+        add(new Li(MIPSRegister.V0, 9));
+        add(new Syscall());
+        push(MIPSRegister.V0);
+    } // compileMallocExp
     
     public void compileOp(final MIPSRegister destination,
                           final MIPSRegister left,
@@ -128,7 +136,9 @@ public class MIPSCodeGenerator {
         } else if (exp instanceof BinopExp) {
             compileBinopExp((BinopExp)exp);
         } else if (exp instanceof SizeofExp) {
-            compileSizeof((SizeofExp)exp);
+            compileSizeofExp((SizeofExp)exp);
+        } else if (exp instanceof MallocExp) {
+            compileMallocExp((MallocExp)exp);
         } else {
             assert(false);
         }
