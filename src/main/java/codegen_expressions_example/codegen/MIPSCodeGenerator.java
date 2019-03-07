@@ -170,6 +170,7 @@ public class MIPSCodeGenerator {
             if (currentFieldName.equals(fieldName)) {
                 return offset;
             }
+            offset -= 4;
         }
 
         assert(false);

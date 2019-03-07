@@ -26,15 +26,29 @@ public class MIPSCodeGeneratorTest {
     public void assertResult(final int expected,
                              final Exp exp,
                              final Map<StructureName, LinkedHashMap<FieldName, Type>> structDecs) throws IOException {
+        boolean wantToSaveFile = false; // for debugging
+
         final File file = File.createTempFile("test", ".asm");
+        boolean testPassed = false;
         try {
             final MIPSCodeGenerator gen = new MIPSCodeGenerator(structDecs);
             gen.compileExpression(exp);
             gen.writeCompleteFile(file);
             final String[] output = SPIMRunner.runFile(file);
-            assertEquals(expected, parseOutput(output));
+            final int received = parseOutput(output);
+            if (wantToSaveFile) {
+                assertEquals("Expected: " + expected + " Received: " + received + " File: " +
+                             file.getAbsolutePath(),
+                             expected,
+                             received);
+            } else {
+                assertEquals(expected, received);
+            }
+            testPassed = true;
         } finally {
-            file.delete();
+            if (wantToSaveFile && testPassed) {
+                file.delete();
+            }
         }
     } // assertResult
 
@@ -173,6 +187,58 @@ public class MIPSCodeGeneratorTest {
             }};
         access.setExpStructure(structName);
         assertResult(7, access, structDecs);
+    }
+
+    @Test
+    public void testStructureAccessTwoFieldFirst() throws IOException {
+        // struct Foo {
+        //   int x;
+        //   int y;
+        // };
+        // Foo(1, 2).x
+        final StructureName structName = new StructureName("Foo");
+        final FieldName fieldName = new FieldName("x");
+        final MakeStructureExp makeStruct =
+            new MakeStructureExp(structName,
+                                 new Exp[] {
+                                     new IntExp(1),
+                                     new IntExp(2) });
+        final FieldAccessExp access = new FieldAccessExp(makeStruct, fieldName);
+        final Map<StructureName, LinkedHashMap<FieldName, Type>> structDecs =
+            new HashMap<StructureName, LinkedHashMap<FieldName, Type>>() {{
+                put(structName, new LinkedHashMap<FieldName, Type>() {{
+                    put(fieldName, new IntType());
+                    put(new FieldName("y"), new IntType());
+                }});
+            }};
+        access.setExpStructure(structName);
+        assertResult(1, access, structDecs);
+    }
+
+    @Test
+    public void testStructureAccessTwoFieldSecond() throws IOException {
+        // struct Foo {
+        //   int x;
+        //   int y;
+        // };
+        // Foo(1, 2).y
+        final StructureName structName = new StructureName("Foo");
+        final FieldName fieldName = new FieldName("y");
+        final MakeStructureExp makeStruct =
+            new MakeStructureExp(structName,
+                                 new Exp[] {
+                                     new IntExp(1),
+                                     new IntExp(2) });
+        final FieldAccessExp access = new FieldAccessExp(makeStruct, fieldName);
+        final Map<StructureName, LinkedHashMap<FieldName, Type>> structDecs =
+            new HashMap<StructureName, LinkedHashMap<FieldName, Type>>() {{
+                put(structName, new LinkedHashMap<FieldName, Type>() {{
+                    put(new FieldName("x"), new IntType());
+                    put(fieldName, new IntType());
+                }});
+            }};
+        access.setExpStructure(structName);
+        assertResult(2, access, structDecs);
     }
 } // MIPSCodeGeneratorTest
 
