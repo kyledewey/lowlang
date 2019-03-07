@@ -240,5 +240,93 @@ public class MIPSCodeGeneratorTest {
         access.setExpStructure(structName);
         assertResult(2, access, structDecs);
     }
+
+    @Test
+    public void testStructureAccessNestedStructureFirst() throws IOException {
+        // struct Bar {
+        //   int x;
+        //   int y;
+        // };
+        // struct Foo {
+        //   struct Bar f;
+        //   int z;
+        // };
+        // Foo(Bar(1, 2), 3).f.y
+
+        final Exp baseExp =
+            new MakeStructureExp(new StructureName("Foo"),
+                                 new Exp[] {
+                                     new MakeStructureExp(new StructureName("Bar"),
+                                                          new Exp[] {
+                                                              new IntExp(1),
+                                                              new IntExp(2)
+                                                          }),
+                                     new IntExp(3)
+                                 });
+        final FieldAccessExp accessF =
+            new FieldAccessExp(baseExp, new FieldName("f"));
+        accessF.setExpStructure(new StructureName("Foo"));
+        final FieldAccessExp accessY =
+            new FieldAccessExp(accessF, new FieldName("y"));
+        accessY.setExpStructure(new StructureName("Bar"));
+
+        final Map<StructureName, LinkedHashMap<FieldName, Type>> structDecs =
+            new HashMap<StructureName, LinkedHashMap<FieldName, Type>>() {{
+                put(new StructureName("Bar"), new LinkedHashMap<FieldName, Type>() {{
+                    put(new FieldName("x"), new IntType());
+                    put(new FieldName("y"), new IntType());
+                }});
+                put(new StructureName("Foo"), new LinkedHashMap<FieldName, Type>() {{
+                    put(new FieldName("f"), new StructureType(new StructureName("Bar")));
+                    put(new FieldName("z"), new IntType());
+                }});
+            }};
+
+        assertResult(2, accessY, structDecs);
+    }
+
+    @Test
+    public void testStructureAccessNestedStructureSecond() throws IOException {
+        // struct Bar {
+        //   int x;
+        //   int y;
+        // };
+        // struct Foo {
+        //   int z;
+        //   struct Bar f;
+        // };
+        // Foo(Bar(1, 2), 3).f.x
+
+        final Exp baseExp =
+            new MakeStructureExp(new StructureName("Foo"),
+                                 new Exp[] {
+                                     new MakeStructureExp(new StructureName("Bar"),
+                                                          new Exp[] {
+                                                              new IntExp(1),
+                                                              new IntExp(2)
+                                                          }),
+                                     new IntExp(3)
+                                 });
+        final FieldAccessExp accessF =
+            new FieldAccessExp(baseExp, new FieldName("f"));
+        accessF.setExpStructure(new StructureName("Foo"));
+        final FieldAccessExp accessX =
+            new FieldAccessExp(accessF, new FieldName("x"));
+        accessX.setExpStructure(new StructureName("Bar"));
+
+        final Map<StructureName, LinkedHashMap<FieldName, Type>> structDecs =
+            new HashMap<StructureName, LinkedHashMap<FieldName, Type>>() {{
+                put(new StructureName("Bar"), new LinkedHashMap<FieldName, Type>() {{
+                    put(new FieldName("x"), new IntType());
+                    put(new FieldName("y"), new IntType());
+                }});
+                put(new StructureName("Foo"), new LinkedHashMap<FieldName, Type>() {{
+                    put(new FieldName("z"), new IntType());
+                    put(new FieldName("f"), new StructureType(new StructureName("Bar")));
+                }});
+            }};
+
+        assertResult(1, accessX, structDecs);
+    }
 } // MIPSCodeGeneratorTest
 
