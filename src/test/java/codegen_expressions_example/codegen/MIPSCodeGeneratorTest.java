@@ -2,6 +2,7 @@ package codegen_expressions_example.codegen;
 
 import codegen_expressions_example.syntax.*;
 
+import java.util.Map;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 
@@ -17,12 +18,17 @@ public class MIPSCodeGeneratorTest {
         assert(spimOutput.length == 2);
         return Integer.parseInt(spimOutput[1]);
     } // parseOutput
-    
+
     public void assertResult(final int expected, final Exp exp) throws IOException {
+        assertResult(expected, exp, new HashMap<StructureName, LinkedHashMap<FieldName, Type>>());
+    }
+    
+    public void assertResult(final int expected,
+                             final Exp exp,
+                             final Map<StructureName, LinkedHashMap<FieldName, Type>> structDecs) throws IOException {
         final File file = File.createTempFile("test", ".asm");
         try {
-            final MIPSCodeGenerator gen =
-                new MIPSCodeGenerator(new HashMap<StructureName, LinkedHashMap<FieldName, Type>>());
+            final MIPSCodeGenerator gen = new MIPSCodeGenerator(structDecs);
             gen.compileExpression(exp);
             gen.writeCompleteFile(file);
             final String[] output = SPIMRunner.runFile(file);
@@ -145,6 +151,28 @@ public class MIPSCodeGeneratorTest {
             new DereferenceExp(new MallocExp(new IntExp(4)));
         exp.setExpType(new PointerType(new IntType()));
         assertResult(0, exp);
+    }
+
+    @Test
+    public void testStructureAccessSingleField() throws IOException {
+        // struct Foo {
+        //   int x;
+        // };
+        // Foo(7).x
+        final StructureName structName = new StructureName("Foo");
+        final FieldName fieldName = new FieldName("x");
+        final MakeStructureExp makeStruct =
+            new MakeStructureExp(structName,
+                                 new Exp[] { new IntExp(7) });
+        final FieldAccessExp access = new FieldAccessExp(makeStruct, fieldName);
+        final Map<StructureName, LinkedHashMap<FieldName, Type>> structDecs =
+            new HashMap<StructureName, LinkedHashMap<FieldName, Type>>() {{
+                put(structName, new LinkedHashMap<FieldName, Type>() {{
+                    put(fieldName, new IntType());
+                }});
+            }};
+        access.setExpStructure(structName);
+        assertResult(7, access, structDecs);
     }
 } // MIPSCodeGeneratorTest
 

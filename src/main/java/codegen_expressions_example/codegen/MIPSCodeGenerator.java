@@ -43,6 +43,8 @@ public class MIPSCodeGenerator {
             for (final Type fieldType : fields.values()) {
                 sum += sizeof(fieldType);
             }
+            assert(sum >= 0);
+            assert(sum % 4 == 0);
             return sum;
         } else {
             assert(false);
@@ -125,8 +127,6 @@ public class MIPSCodeGenerator {
         // expression is (thanks typechecker!), which will tell us how much
         // to load in
         final int loadSize = sizeof(exp.getExpType());
-        assert(loadSize >= 0);
-        assert(loadSize % 4 == 0); // we load one word (4 bytes) at a time
         
         // memory address is on top of stack
         compileExpression(exp.exp);
@@ -149,6 +149,60 @@ public class MIPSCodeGenerator {
         }
     } // compileDereferenceExp
     
+    public void compileMakeStructureExp(final MakeStructureExp exp) {
+        // each parameter is pushed onto the stack
+        // note that by evaluating left-to-right, this means that the
+        // _last_ value on the structure will appear on top of the stack
+        for (final Exp parameter : exp.parameters) {
+            compileExpression(parameter);
+        }
+    } // compileMakeStructureExp
+
+    public int fieldOffset(final StructureName structureName,
+                           final FieldName fieldName) {
+        // last value has offset zero
+        final LinkedHashMap<FieldName, Type> fields =
+            structDecs.get(structureName);
+        assert(fields != null);
+
+        int offset = (fields.size() - 1) * 4;
+        for (final FieldName currentFieldName : fields.keySet()) {
+            if (currentFieldName.equals(fieldName)) {
+                return offset;
+            }
+        }
+
+        assert(false);
+        return 0;
+    } // fieldOffset
+            
+    public void compileFieldAccessExp(final FieldAccessExp exp) {
+        // access a given field of a structure
+        // will consume the entire structure on the stack
+        final StructureName structName = exp.getExpStructure();
+        final int wholeStructureSize = sizeof(new StructureType(structName));
+        final int offset = fieldOffset(structName, exp.field);
+        final int accessSize = sizeof(structDecs.get(structName).get(exp.field));
+        
+        // structure will be on the stack afterward
+        compileExpression(exp.exp);
+
+        // TRICKY BIT: accessSize is arbitrarily large.  As such, we need to
+        // copy from the offset to where the top of the stack _will be_ after
+        // we deallocate
+        final int finalSpMove = wholeStructureSize - accessSize;
+        assert(finalSpMove >= 0);
+        
+        final MIPSRegister sp = MIPSRegister.SP;
+        final MIPSRegister t0 = MIPSRegister.T0;
+        for (int subAmount = 0; subAmount < accessSize; subAmount += 4) {
+            add(new Lw(t0, offset - subAmount, sp));
+            add(new Sw(t0, finalSpMove - subAmount, sp));
+        }
+
+        add(new Addi(sp, sp, finalSpMove));
+    } // compileFieldAccessExp        
+        
     public void compileOp(final MIPSRegister destination,
                           final MIPSRegister left,
                           final Op op,
@@ -203,6 +257,10 @@ public class MIPSCodeGenerator {
             compileCastExp((CastExp)exp);
         } else if (exp instanceof DereferenceExp) {
             compileDereferenceExp((DereferenceExp)exp);
+        } else if (exp instanceof MakeStructureExp) {
+            compileMakeStructureExp((MakeStructureExp)exp);
+        } else if (exp instanceof FieldAccessExp) {
+            compileFieldAccessExp((FieldAccessExp)exp);
         } else {
             assert(false);
         }

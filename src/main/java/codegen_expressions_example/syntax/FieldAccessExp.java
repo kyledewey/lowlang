@@ -2,11 +2,13 @@ package codegen_expressions_example.syntax;
 
 public class FieldAccessExp implements Exp {
     public final Exp exp;
+    private StructureName expStructure; // Typechecker is expected to fill this in
     public final FieldName field;
 
     public FieldAccessExp(final Exp exp,
                           final FieldName field) {
         this.exp = exp;
+        expStructure = null;
         this.field = field;
     }
 
@@ -26,5 +28,15 @@ public class FieldAccessExp implements Exp {
 
     public String toString() {
         return exp.toString() + "." + field.toString();
+    }
+
+    public StructureName getExpStructure() {
+        assert(expStructure != null);
+        return expStructure;
+    }
+
+    public void setExpStructure(final StructureName expStructure) {
+        assert(expStructure != null);
+        this.expStructure = expStructure;
     }
 }
