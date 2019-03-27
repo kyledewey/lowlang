@@ -18,9 +18,19 @@ import org.junit.rules.TestName;
 public class MIPSCodeGeneratorStatementTest {
     final Map<StructureName, LinkedHashMap<FieldName, Type>> TWO_INTS =
         new HashMap<StructureName, LinkedHashMap<FieldName, Type>>() {{
-            put(new StructureName("Foo"), new LinkedHashMap<FieldName, Type>() {{
+            put(new StructureName("TwoInts"), new LinkedHashMap<FieldName, Type>() {{
                 put(new FieldName("x"), new IntType());
                 put(new FieldName("y"), new IntType());
+            }});
+        }};
+
+    final Map<StructureName, LinkedHashMap<FieldName, Type>> DOUBLE_TWO_INTS =
+        new HashMap<StructureName, LinkedHashMap<FieldName, Type>>() {{
+            final StructureName twoInts = new StructureName("TwoInts");
+            put(twoInts, TWO_INTS.get(twoInts));
+            put(new StructureName("FourInts"), new LinkedHashMap<FieldName, Type>() {{
+                put(new FieldName("first"), new StructureType(twoInts));
+                put(new FieldName("second"), new StructureType(twoInts));
             }});
         }};
 
@@ -89,8 +99,12 @@ public class MIPSCodeGeneratorStatementTest {
         return new PrintStmt(new VariableExp(new Variable(varName)));
     }
 
+    public static AssignmentStmt assign(final Lhs lhs, final Exp exp) {
+        return new AssignmentStmt(lhs, exp);
+    }
+    
     public static AssignmentStmt assign(final String varName, final Exp exp) {
-        return new AssignmentStmt(new VariableLhs(new Variable(varName)), exp);
+        return assign(new VariableLhs(new Variable(varName)), exp);
     }
 
     @Test
@@ -140,7 +154,7 @@ public class MIPSCodeGeneratorStatementTest {
     public void testDeclareStructureGetFirst() throws IOException {
         final FieldAccessExp access = new FieldAccessExp(new VariableExp(new Variable("x")),
                                                          new FieldName("x"));
-        final StructureName structName = new StructureName("Foo");
+        final StructureName structName = new StructureName("TwoInts");
         access.setExpStructure(structName);
         assertResult(1,
                      stmts(vardec("x",
@@ -158,7 +172,7 @@ public class MIPSCodeGeneratorStatementTest {
     public void testDeclareStructureGetSecond() throws IOException {
         final FieldAccessExp access = new FieldAccessExp(new VariableExp(new Variable("x")),
                                                          new FieldName("y"));
-        final StructureName structName = new StructureName("Foo");
+        final StructureName structName = new StructureName("TwoInts");
         access.setExpStructure(structName);
         assertResult(2,
                      stmts(vardec("x",
@@ -176,7 +190,7 @@ public class MIPSCodeGeneratorStatementTest {
     public void testAssignSingleStructureGetFirst() throws IOException {
         final FieldAccessExp access = new FieldAccessExp(new VariableExp(new Variable("x")),
                                                          new FieldName("x"));
-        final StructureName structName = new StructureName("Foo");
+        final StructureName structName = new StructureName("TwoInts");
         access.setExpStructure(structName);
         assertResult(3,
                      stmts(vardec("x",
@@ -200,7 +214,7 @@ public class MIPSCodeGeneratorStatementTest {
     public void testAssignSingleStructureGetSecond() throws IOException {
         final FieldAccessExp access = new FieldAccessExp(new VariableExp(new Variable("x")),
                                                          new FieldName("y"));
-        final StructureName structName = new StructureName("Foo");
+        final StructureName structName = new StructureName("TwoInts");
         access.setExpStructure(structName);
         assertResult(4,
                      stmts(vardec("x",
@@ -218,5 +232,102 @@ public class MIPSCodeGeneratorStatementTest {
                                                        })),
                            new PrintStmt(access)),
                      TWO_INTS);
-    }                     
+    }
+
+    @Test
+    public void testAssignStructureFieldFirst() throws IOException {
+        final StructureName twoInts = new StructureName("TwoInts");
+
+        final FieldAccessExp accessExp = new FieldAccessExp(new VariableExp(new Variable("x")),
+                                                            new FieldName("x"));
+        accessExp.setExpStructure(twoInts);
+        final FieldAccessLhs accessLhs = new FieldAccessLhs(new VariableLhs(new Variable("x")),
+                                                            new FieldName("x"));
+        accessLhs.setLhsStructure(twoInts);
+        
+        assertResult(3,
+                     stmts(vardec("x",
+                                  new StructureType(twoInts),
+                                  new MakeStructureExp(twoInts,
+                                                       new Exp[] {
+                                                           new IntExp(1),
+                                                           new IntExp(2)
+                                                       })),
+                           assign(accessLhs,new IntExp(3)),
+                           new PrintStmt(accessExp)),
+                     TWO_INTS);
+    }
+
+    @Test
+    public void testAssignStructureFieldSecond() throws IOException {
+        final StructureName twoInts = new StructureName("TwoInts");
+        
+        final FieldAccessExp accessExp = new FieldAccessExp(new VariableExp(new Variable("x")),
+                                                            new FieldName("y"));
+        accessExp.setExpStructure(twoInts);
+        final FieldAccessLhs accessLhs = new FieldAccessLhs(new VariableLhs(new Variable("x")),
+                                                            new FieldName("y"));
+        accessLhs.setLhsStructure(twoInts);
+        
+        assertResult(3,
+                     stmts(vardec("x",
+                                  new StructureType(twoInts),
+                                  new MakeStructureExp(twoInts,
+                                                       new Exp[] {
+                                                           new IntExp(1),
+                                                           new IntExp(2)
+                                                       })),
+                           assign(accessLhs, new IntExp(3)),
+                           new PrintStmt(accessExp)),
+                     TWO_INTS);
+    }
+
+    @Test
+    public void testAssignNestedStructureFirst() throws IOException {
+        final StructureName twoInts = new StructureName("TwoInts");
+        final StructureName fourInts = new StructureName("FourInts");
+
+        final FieldAccessExp accessFirst = new FieldAccessExp(new VariableExp(new Variable("x")),
+                                                              new FieldName("first"));
+        accessFirst.setExpStructure(fourInts);
+
+        final FieldAccessExp accessX = new FieldAccessExp(accessFirst,
+                                                          new FieldName("x"));
+        accessX.setExpStructure(twoInts);
+
+        final FieldAccessLhs accessLhs = new FieldAccessLhs(new VariableLhs(new Variable("x")),
+                                                            new FieldName("first"));
+        accessLhs.setLhsStructure(fourInts);
+        
+        assertResult(5,
+                     stmts(vardec("first",
+                                  new StructureType(twoInts),
+                                  new MakeStructureExp(twoInts,
+                                                       new Exp[] {
+                                                           new IntExp(1),
+                                                           new IntExp(2)
+                                                       })),
+                           vardec("second",
+                                  new StructureType(twoInts),
+                                  new MakeStructureExp(twoInts,
+                                                       new Exp[] {
+                                                           new IntExp(3),
+                                                           new IntExp(4)
+                                                       })),
+                           vardec("x",
+                                  new StructureType(fourInts),
+                                  new MakeStructureExp(fourInts,
+                                                       new Exp[] {
+                                                           new VariableExp(new Variable("first")),
+                                                           new VariableExp(new Variable("second"))
+                                                       })),
+                           assign(accessLhs,
+                                  new MakeStructureExp(twoInts,
+                                                       new Exp[] {
+                                                           new IntExp(5),
+                                                           new IntExp(6)
+                                                       })),
+                           new PrintStmt(accessX)),
+                     DOUBLE_TWO_INTS);
+    }
 }

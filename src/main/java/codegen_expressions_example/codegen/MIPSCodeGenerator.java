@@ -58,6 +58,12 @@ public class MIPSCodeGenerator {
     public int lhsOffset(final Lhs lhs) {
         if (lhs instanceof VariableLhs) {
             return variables.variableOffset(((VariableLhs)lhs).variable);
+        } else if (lhs instanceof FieldAccessLhs) {
+            final FieldAccessLhs asField = (FieldAccessLhs)lhs;
+            final int offsetFromLhs = lhsOffset(asField.lhs);
+            final int offsetFromField = fieldOffset(asField.getLhsStructure(),
+                                                    asField.field);
+            return offsetFromLhs + offsetFromField;
         } else {
             assert(false);
             return 0;
@@ -67,6 +73,9 @@ public class MIPSCodeGenerator {
     public int lhsSize(final Lhs lhs) {
         if (lhs instanceof VariableLhs) {
             return variables.variableSize(((VariableLhs)lhs).variable);
+        } else if (lhs instanceof FieldAccessLhs) {
+            final FieldAccessLhs asField = (FieldAccessLhs)lhs;
+            return sizeof(structDecs.get(asField.getLhsStructure()).get(asField.field));
         } else {
             assert(false);
             return 0;
