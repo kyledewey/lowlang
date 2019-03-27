@@ -61,18 +61,23 @@ public class MIPSCodeGenerator {
         return variables.variableOffset(variable) + expressionOffset;
     }
     
-    public int lhsOffset(final Lhs lhs) {
+    public void putLhsAddressIntoRegister(final MIPSRegister destination,
+                                          final Lhs lhs) {
         if (lhs instanceof VariableLhs) {
-            return variableOffset(((VariableLhs)lhs).variable);
+            final int offset = variableOffset(((VariableLhs)lhs).variable);
+            add(new Addi(destination, MIPSRegister.SP, offset));
         } else if (lhs instanceof FieldAccessLhs) {
             final FieldAccessLhs asField = (FieldAccessLhs)lhs;
-            final int offsetFromLhs = lhsOffset(asField.lhs);
             final int offsetFromField = fieldOffset(asField.getLhsStructure(),
                                                     asField.field);
-            return offsetFromLhs + offsetFromField;
+            putLhsAddressIntoRegister(destination, asField.lhs);
+            add(new Addi(destination, destination, offsetFromField));
+        } else if (lhs instanceof DereferenceLhs) {
+            final DereferenceLhs asDeref = (DereferenceLhs)lhs;
+            putLhsAddressIntoRegister(destination, asDeref.lhs);
+            add(new Lw(destination, 0, destination));
         } else {
             assert(false);
-            return 0;
         }
     }
 
@@ -91,25 +96,26 @@ public class MIPSCodeGenerator {
         }
     }
     
-    public void compileAssignmentStmt(final AssignmentStmt stmt) {
-        // establish where we're going to copy
-        final int size = lhsSize(stmt.lhs);
-        assert(size % 4 == 0);
-        final int copyToOffset = lhsOffset(stmt.lhs);
-        
+    public void compileAssignmentStmt(final AssignmentStmt stmt) {        
         // determine new value
         compileExpression(stmt.exp);
         resetExpressionOffset();
-        
+
+        // establish where we're going to copy
+        final int size = lhsSize(stmt.lhs);
+        assert(size % 4 == 0);
+        final MIPSRegister t0 = MIPSRegister.T0;
+        putLhsAddressIntoRegister(t0, stmt.lhs);
+
         // copy this value into the variable
         // first, deallocate the stack pointer, to line up with the variables
         final MIPSRegister sp = MIPSRegister.SP;
         add(new Addi(sp, sp, size));
 
         for (int base = 0; base < size; base += 4) {
-            final MIPSRegister t0 = MIPSRegister.T0;
-            add(new Lw(t0, -(size - base), sp));
-            add(new Sw(t0, copyToOffset + base, sp));
+            final MIPSRegister t1 = MIPSRegister.T1;
+            add(new Lw(t1, -(size - base), sp));
+            add(new Sw(t1, base + size, t0));
         }
     }
 
@@ -384,9 +390,8 @@ public class MIPSCodeGenerator {
     }
 
     public void compileAddressOfExp(final AddressOfExp exp) {
-        final int offset = lhsOffset(exp.lhs);
         final MIPSRegister t0 = MIPSRegister.T0;
-        add(new Addi(t0, MIPSRegister.SP, offset));
+        putLhsAddressIntoRegister(t0, exp.lhs);
         push(t0);
     }
     
