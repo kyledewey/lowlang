@@ -399,6 +399,9 @@ public class MIPSCodeGeneratorStatementTest {
         // *p = 7;
         // print(x)
 
+        final DereferenceLhs deref = new DereferenceLhs(new VariableLhs(new Variable("x")));
+        deref.setTypeAfterDereference(new IntType());
+        
         assertResult(7,
                      stmts(vardec("x",
                                   new IntType(),
@@ -406,7 +409,7 @@ public class MIPSCodeGeneratorStatementTest {
                            vardec("p",
                                   new PointerType(new IntType()),
                                   new AddressOfExp(new VariableLhs(new Variable("x")))),
-                           assign(new DereferenceLhs(new VariableLhs(new Variable("x"))),
+                           assign(deref,
                                   new IntExp(7)),
                            printVar("x")));
     }

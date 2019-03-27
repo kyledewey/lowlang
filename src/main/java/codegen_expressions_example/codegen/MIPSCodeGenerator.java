@@ -82,6 +82,9 @@ public class MIPSCodeGenerator {
         } else if (lhs instanceof FieldAccessLhs) {
             final FieldAccessLhs asField = (FieldAccessLhs)lhs;
             return sizeof(structDecs.get(asField.getLhsStructure()).get(asField.field));
+        } else if (lhs instanceof DereferenceLhs) {
+            final DereferenceLhs asDereference = (DereferenceLhs)lhs;
+            return sizeof(asDereference.getTypeAfterDereference());
         } else {
             assert(false);
             return 0;

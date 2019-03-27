@@ -2,9 +2,11 @@ package codegen_expressions_example.syntax;
 
 public class DereferenceLhs implements Lhs {
     public final Lhs lhs;
-
+    private Type typeAfterDereference; // typechecker is expected to fill this in
+    
     public DereferenceLhs(final Lhs lhs) {
         this.lhs = lhs;
+        typeAfterDereference = null;
     }
 
     public int hashCode() {
@@ -19,4 +21,14 @@ public class DereferenceLhs implements Lhs {
     public String toString() {
         return "*" + lhs.toString();
     }
+
+    public Type getTypeAfterDereference() {
+        assert(typeAfterDereference != null);
+        return typeAfterDereference;
+    }
+
+    public void setTypeAfterDereference(final Type typeAfterDereference) {
+        assert(typeAfterDereference != null);
+        this.typeAfterDereference = typeAfterDereference;
+    }    
 }
