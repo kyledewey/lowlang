@@ -391,4 +391,23 @@ public class MIPSCodeGeneratorStatementTest {
                            new PrintStmt(accessX)),
                      DOUBLE_TWO_INTS);
     }
+
+    @Test
+    public void testAssignIntThroughPointer() throws IOException {
+        // int x = 5;
+        // int* p = &x;
+        // *p = 7;
+        // print(x)
+
+        assertResult(7,
+                     stmts(vardec("x",
+                                  new IntType(),
+                                  new IntExp(5)),
+                           vardec("p",
+                                  new PointerType(new IntType()),
+                                  new AddressOfExp(new VariableLhs(new Variable("x")))),
+                           assign(new DereferenceLhs(new VariableLhs(new Variable("x"))),
+                                  new IntExp(7)),
+                           printVar("x")));
+    }
 }

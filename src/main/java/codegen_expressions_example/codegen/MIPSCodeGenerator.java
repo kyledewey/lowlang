@@ -56,12 +56,14 @@ public class MIPSCodeGenerator {
         compileStatement(stmt.first);
         compileStatement(stmt.second);
     }
+
+    public int variableOffset(final Variable variable) {
+        return variables.variableOffset(variable) + expressionOffset;
+    }
     
     public int lhsOffset(final Lhs lhs) {
         if (lhs instanceof VariableLhs) {
-            final VariableLhs asVar = (VariableLhs)lhs;
-            final int offset = variables.variableOffset(asVar.variable);
-            return offset;
+            return variableOffset(((VariableLhs)lhs).variable);
         } else if (lhs instanceof FieldAccessLhs) {
             final FieldAccessLhs asField = (FieldAccessLhs)lhs;
             final int offsetFromLhs = lhsOffset(asField.lhs);
@@ -366,7 +368,7 @@ public class MIPSCodeGenerator {
         // copy variable's value to top of stack
         final int size = variables.variableSize(exp.variable);
         assert(size % 4 == 0);
-        final int copyFromOffset = variables.variableOffset(exp.variable) + expressionOffset;
+        final int copyFromOffset = variableOffset(exp.variable);
         
         final MIPSRegister sp = MIPSRegister.SP;
         for (int base = 0; base < size; base += 4) {
@@ -376,6 +378,10 @@ public class MIPSCodeGenerator {
         }
         add(new Addi(sp, sp, -size));
         expressionOffset += size;
+    }
+
+    public void compileAddressOfExp(final AddressOfExp exp) {
+        assert(false);
     }
     
     public void compileExpression(final Exp exp) {
@@ -397,6 +403,8 @@ public class MIPSCodeGenerator {
             compileCastExp((CastExp)exp);
         } else if (exp instanceof DereferenceExp) {
             compileDereferenceExp((DereferenceExp)exp);
+        } else if (exp instanceof AddressOfExp) {
+            compileAddressOfExp((AddressOfExp)exp);
         } else if (exp instanceof MakeStructureExp) {
             compileMakeStructureExp((MakeStructureExp)exp);
         } else if (exp instanceof FieldAccessExp) {
