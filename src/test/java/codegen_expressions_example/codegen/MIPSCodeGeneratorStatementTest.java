@@ -300,13 +300,16 @@ public class MIPSCodeGeneratorStatementTest {
         accessLhs.setLhsStructure(fourInts);
         
         assertResult(5,
-                     stmts(vardec("first",
+                     stmts(
+                           // first = TwoInts(1, 2)
+                           vardec("first",
                                   new StructureType(twoInts),
                                   new MakeStructureExp(twoInts,
                                                        new Exp[] {
                                                            new IntExp(1),
                                                            new IntExp(2)
                                                        })),
+                           // second = TwoInts(3, 4)
                            vardec("second",
                                   new StructureType(twoInts),
                                   new MakeStructureExp(twoInts,
@@ -314,6 +317,7 @@ public class MIPSCodeGeneratorStatementTest {
                                                            new IntExp(3),
                                                            new IntExp(4)
                                                        })),
+                           // x = FourInts(first, second)
                            vardec("x",
                                   new StructureType(fourInts),
                                   new MakeStructureExp(fourInts,
@@ -321,12 +325,69 @@ public class MIPSCodeGeneratorStatementTest {
                                                            new VariableExp(new Variable("first")),
                                                            new VariableExp(new Variable("second"))
                                                        })),
+                           // x.first = TwoInts(5, 6)
                            assign(accessLhs,
                                   new MakeStructureExp(twoInts,
                                                        new Exp[] {
                                                            new IntExp(5),
                                                            new IntExp(6)
                                                        })),
+                           // print(x.first.x)
+                           new PrintStmt(accessX)),
+                     DOUBLE_TWO_INTS);
+    }
+
+    @Test
+    public void testAssignNestedStructureSecond() throws IOException {
+        final StructureName twoInts = new StructureName("TwoInts");
+        final StructureName fourInts = new StructureName("FourInts");
+
+        final FieldAccessExp accessSecond = new FieldAccessExp(new VariableExp(new Variable("x")),
+                                                               new FieldName("second"));
+        accessSecond.setExpStructure(fourInts);
+
+        final FieldAccessExp accessX = new FieldAccessExp(accessSecond,
+                                                          new FieldName("x"));
+        accessX.setExpStructure(twoInts);
+
+        final FieldAccessLhs accessLhs = new FieldAccessLhs(new VariableLhs(new Variable("x")),
+                                                            new FieldName("second"));
+        accessLhs.setLhsStructure(fourInts);
+        
+        assertResult(5,
+                     stmts(
+                           // first = TwoInts(1, 2)
+                           vardec("first",
+                                  new StructureType(twoInts),
+                                  new MakeStructureExp(twoInts,
+                                                       new Exp[] {
+                                                           new IntExp(1),
+                                                           new IntExp(2)
+                                                       })),
+                           // second = TwoInts(3, 4)
+                           vardec("second",
+                                  new StructureType(twoInts),
+                                  new MakeStructureExp(twoInts,
+                                                       new Exp[] {
+                                                           new IntExp(3),
+                                                           new IntExp(4)
+                                                       })),
+                           // x = FourInts(first, second)
+                           vardec("x",
+                                  new StructureType(fourInts),
+                                  new MakeStructureExp(fourInts,
+                                                       new Exp[] {
+                                                           new VariableExp(new Variable("first")),
+                                                           new VariableExp(new Variable("second"))
+                                                       })),
+                           // x.second = TwoInts(5, 6)
+                           assign(accessLhs,
+                                  new MakeStructureExp(twoInts,
+                                                       new Exp[] {
+                                                           new IntExp(5),
+                                                           new IntExp(6)
+                                                       })),
+                           // print(x.second.x)
                            new PrintStmt(accessX)),
                      DOUBLE_TWO_INTS);
     }

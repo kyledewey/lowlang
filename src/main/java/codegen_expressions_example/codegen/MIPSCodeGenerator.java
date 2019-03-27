@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Collections;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -57,12 +58,17 @@ public class MIPSCodeGenerator {
     
     public int lhsOffset(final Lhs lhs) {
         if (lhs instanceof VariableLhs) {
-            return variables.variableOffset(((VariableLhs)lhs).variable);
+            final VariableLhs asVar = (VariableLhs)lhs;
+            final int offset = variables.variableOffset(asVar.variable);
+            //System.out.println(asVar.variable.toString() + ": " + offset);
+            return offset;
         } else if (lhs instanceof FieldAccessLhs) {
             final FieldAccessLhs asField = (FieldAccessLhs)lhs;
             final int offsetFromLhs = lhsOffset(asField.lhs);
             final int offsetFromField = fieldOffset(asField.getLhsStructure(),
                                                     asField.field);
+            // System.out.println("LHS OFFSET: " + offsetFromLhs);
+            // System.out.println("FIELD OFFSET: " + offsetFromField);
             return offsetFromLhs + offsetFromField;
         } else {
             assert(false);
@@ -87,6 +93,7 @@ public class MIPSCodeGenerator {
         final int size = lhsSize(stmt.lhs);
         assert(size % 4 == 0);
         final int copyToOffset = lhsOffset(stmt.lhs);
+        //System.out.println("COPY TO OFFSET: " + copyToOffset);
         
         // determine new value
         compileExpression(stmt.exp);
@@ -267,19 +274,25 @@ public class MIPSCodeGenerator {
         }
     } // compileMakeStructureExp
 
-    public int fieldOffset(final StructureName structureName,
-                           final FieldName fieldName) {
-        // last value has offset zero
-        final LinkedHashMap<FieldName, Type> fields =
-            structDecs.get(structureName);
+    public List<Map.Entry<FieldName, Type>> reverseFieldsFor(final StructureName structName) {
+        final LinkedHashMap<FieldName, Type> fields = structDecs.get(structName);
         assert(fields != null);
 
-        int offset = (fields.size() - 1) * 4;
-        for (final FieldName currentFieldName : fields.keySet()) {
-            if (currentFieldName.equals(fieldName)) {
+        final List<Map.Entry<FieldName, Type>> asList =
+            new ArrayList<Map.Entry<FieldName, Type>>(fields.entrySet());
+        Collections.reverse(asList);
+        return asList;
+    }
+    
+    public int fieldOffset(final StructureName structureName,
+                           final FieldName fieldName) {
+        int offset = 0;
+        // last value has offset zero
+        for (final Map.Entry<FieldName, Type> entry : reverseFieldsFor(structureName)) {
+            if (entry.getKey().equals(fieldName)) {
                 return offset;
             }
-            offset -= 4;
+            offset += sizeof(entry.getValue());
         }
 
         assert(false);
