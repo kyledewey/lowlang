@@ -33,18 +33,21 @@ public class MIPSCodeGenerator {
         expressionOffset = 0;
     }
 
-    private void declareVariable(final VariableDeclaration dec, final Exp value) {
-        compileExpression(value);
-        // variable's value is now on top of stack
+    // specifically used in statement contexts, when a statement finishes evaluating an
+    // expression inside
+    private void resetExpressionOffset() {
         assert(expressionOffset == 4);
         expressionOffset = 0;
+    }
+    
+    public void compileVariableDeclarationInitializationStmt(final VariableDeclarationInitializationStmt stmt) {
+        compileExpression(stmt.exp);
+        resetExpressionOffset();
+        final VariableDeclaration dec = stmt.varDec;
+        // variable's value is now on top of stack
         variables.pushVariable(dec.variable,
                                dec.type,
                                sizeof(dec.type));
-    }
-
-    public void compileVariableDeclarationInitializationStmt(final VariableDeclarationInitializationStmt stmt) {
-        declareVariable(stmt.varDec, stmt.exp);
     }
 
     public void compileSequenceStmt(final SequenceStmt stmt) {
@@ -75,10 +78,11 @@ public class MIPSCodeGenerator {
         final int size = lhsSize(stmt.lhs);
         assert(size % 4 == 0);
         final int copyToOffset = lhsOffset(stmt.lhs);
-
+        
         // determine new value
         compileExpression(stmt.exp);
-
+        resetExpressionOffset();
+        
         // copy this value into the variable
         // first, deallocate the stack pointer, to line up with the variables
         final MIPSRegister sp = MIPSRegister.SP;
@@ -103,6 +107,8 @@ public class MIPSCodeGenerator {
     
     public void compilePrintStmt(final PrintStmt stmt) {
         compileExpression(stmt.exp);
+        resetExpressionOffset();
+        
         pop(MIPSRegister.A0);
         printA0();
     }
