@@ -33,7 +33,7 @@ public class MIPSCodeGeneratorTest {
         try {
             final MIPSCodeGenerator gen = new MIPSCodeGenerator(structDecs);
             gen.compileExpression(exp);
-            gen.writeCompleteFile(file);
+            gen.writeCompleteFile(file, true);
             final String[] output = SPIMRunner.runFile(file);
             final int received = parseOutput(output);
             if (wantToSaveFile) {

@@ -23,12 +23,104 @@ import java.io.IOException;
 public class MIPSCodeGenerator {
     private final Map<StructureName, LinkedHashMap<FieldName, Type>> structDecs;
     private final List<MIPSInstruction> instructions;
-
+    private final VariableTable variables;
+    private int expressionOffset;
+    
     public MIPSCodeGenerator(final Map<StructureName, LinkedHashMap<FieldName, Type>> structDecs) {
         this.structDecs = structDecs;
         instructions = new ArrayList<MIPSInstruction>();
+        variables = new VariableTable();
+        expressionOffset = 0;
     }
 
+    private void declareVariable(final VariableDeclaration dec, final Exp value) {
+        compileExpression(value);
+        // variable's value is now on top of stack
+        assert(expressionOffset == 4);
+        expressionOffset = 0;
+        variables.pushVariable(dec.variable,
+                               dec.type,
+                               sizeof(dec.type));
+    }
+
+    public void compileVariableDeclarationInitializationStmt(final VariableDeclarationInitializationStmt stmt) {
+        declareVariable(stmt.varDec, stmt.exp);
+    }
+
+    public void compileSequenceStmt(final SequenceStmt stmt) {
+        compileStatement(stmt.first);
+        compileStatement(stmt.second);
+    }
+    
+    public int lhsOffset(final Lhs lhs) {
+        if (lhs instanceof VariableLhs) {
+            return variables.variableOffset(((VariableLhs)lhs).variable);
+        } else {
+            assert(false);
+            return 0;
+        }
+    }
+
+    public int lhsSize(final Lhs lhs) {
+        if (lhs instanceof VariableLhs) {
+            return variables.variableSize(((VariableLhs)lhs).variable);
+        } else {
+            assert(false);
+            return 0;
+        }
+    }
+    
+    public void compileAssignmentStmt(final AssignmentStmt stmt) {
+        // establish where we're going to copy
+        final int size = lhsSize(stmt.lhs);
+        assert(size % 4 == 0);
+        final int copyToOffset = lhsOffset(stmt.lhs);
+
+        // determine new value
+        compileExpression(stmt.exp);
+
+        // copy this value into the variable
+        // first, deallocate the stack pointer, to line up with the variables
+        final MIPSRegister sp = MIPSRegister.SP;
+        add(new Addi(sp, sp, size));
+
+        for (int base = 0; base < size; base += 4) {
+            final MIPSRegister t0 = MIPSRegister.T0;
+            add(new Lw(t0, -(base + 4), sp));
+            add(new Sw(t0, copyToOffset + base, sp));
+        }
+    }
+
+    public void printA0() {
+        add(new Li(MIPSRegister.V0, 1));
+        add(new Syscall());
+
+        // print a newline
+        add(new Li(MIPSRegister.V0, 4));
+        add(new La(MIPSRegister.A0, "newline"));
+        add(new Syscall());
+    }
+    
+    public void compilePrintStmt(final PrintStmt stmt) {
+        compileExpression(stmt.exp);
+        pop(MIPSRegister.A0);
+        printA0();
+    }
+    
+    public void compileStatement(final Stmt stmt) {
+        if (stmt instanceof VariableDeclarationInitializationStmt) {
+            compileVariableDeclarationInitializationStmt((VariableDeclarationInitializationStmt)stmt);
+        } else if (stmt instanceof AssignmentStmt) {
+            compileAssignmentStmt((AssignmentStmt)stmt);
+        } else if (stmt instanceof SequenceStmt) {
+            compileSequenceStmt((SequenceStmt)stmt);
+        } else if (stmt instanceof PrintStmt) {
+            compilePrintStmt((PrintStmt)stmt);
+        } else {
+            assert(false);
+        }
+    }
+    
     // for simplicity, bools and chars are 4 bytes
     public int sizeof(final Type type) {
         if (type instanceof IntType ||
@@ -63,6 +155,7 @@ public class MIPSCodeGenerator {
         final MIPSRegister sp = MIPSRegister.SP;
         add(new Addi(sp, sp, -4));
         add(new Sw(register, 0, sp));
+        expressionOffset += 4;
     } // push
 
     // uses $t0 as a temp
@@ -82,6 +175,7 @@ public class MIPSCodeGenerator {
         final MIPSRegister sp = MIPSRegister.SP;
         add(new Lw(register, 0, sp));
         add(new Addi(sp, sp, 4));
+        expressionOffset -= 4;
     } // pop
     
     public void compileIntExp(final IntExp exp) {
@@ -240,6 +334,22 @@ public class MIPSCodeGenerator {
         compileOp(t0, t0, exp.op, t1);
         push(t0);
     } // compileBinopExp
+
+    public void compileVariableExp(final VariableExp exp) {
+        // copy variable's value to top of stack
+        final int size = variables.variableSize(exp.variable);
+        assert(size % 4 == 0);
+        final int copyFromOffset = variables.variableOffset(exp.variable) + expressionOffset;
+        
+        final MIPSRegister sp = MIPSRegister.SP;
+        for (int base = 0; base < size; base += 4) {
+            final MIPSRegister t0 = MIPSRegister.T0;
+            add(new Lw(t0, copyFromOffset + base, sp));
+            add(new Sw(t0, -(base + 4), sp));
+        }
+        add(new Addi(sp, sp, -size));
+        expressionOffset += size;
+    }
     
     public void compileExpression(final Exp exp) {
         if (exp instanceof IntExp) {
@@ -250,6 +360,8 @@ public class MIPSCodeGenerator {
             compileCharExp((CharExp)exp);
         } else if (exp instanceof BinopExp) {
             compileBinopExp((BinopExp)exp);
+        } else if (exp instanceof VariableExp) {
+            compileVariableExp((VariableExp)exp);
         } else if (exp instanceof SizeofExp) {
             compileSizeofExp((SizeofExp)exp);
         } else if (exp instanceof MallocExp) {
@@ -271,26 +383,22 @@ public class MIPSCodeGenerator {
         return instructions.toArray(new MIPSInstruction[instructions.size()]);
     } // getInstructions
 
-    private void mainEnd() {
-        // print the thing on top of the stack
-        pop(MIPSRegister.A0);
-        add(new Li(MIPSRegister.V0, 1));
-        add(new Syscall());
-
-        // print a newline
-        add(new Li(MIPSRegister.V0, 4));
-        add(new La(MIPSRegister.A0, "newline"));
-        add(new Syscall());
+    private void mainEnd(final boolean printTopOfStack) {
+        if (printTopOfStack) {
+            pop(MIPSRegister.A0);
+            printA0();
+        }
         
         // exit
         add(new Li(MIPSRegister.V0, 10));
         add(new Syscall());
     } // mainEnd
     
-    public void writeCompleteFile(final File file) throws IOException {
+    public void writeCompleteFile(final File file,
+                                  final boolean printTopOfStack) throws IOException {
         final PrintWriter output =
             new PrintWriter(new BufferedWriter(new FileWriter(file)));
-        mainEnd();
+        mainEnd(printTopOfStack);
         try {
             output.println(".data");
             output.println("newline:");
