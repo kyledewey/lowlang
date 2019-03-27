@@ -61,10 +61,64 @@ public class MIPSCodeGeneratorStatementTest {
                                                          exp);
     }
 
+    public static Stmt stmts(final Stmt... stmts) {
+        assert(stmts.length > 0);
+        Stmt result = stmts[stmts.length - 1];
+
+        for (int index = stmts.length - 2; index >= 0; index--) {
+            result = new SequenceStmt(stmts[index], result);
+        }
+        return result;
+    }
+
+    public static PrintStmt printVar(final String varName) {
+        return new PrintStmt(new VariableExp(new Variable(varName)));
+    }
+
+    public static AssignmentStmt assign(final String varName, final Exp exp) {
+        return new AssignmentStmt(new VariableLhs(new Variable(varName)), exp);
+    }
+
     @Test
-    public void testSingleVariableDeclaration() throws IOException {
-        assertResult(1,
-                     new SequenceStmt(vardec("x", new IntType(), new IntExp(1)),
-                                      new PrintStmt(new VariableExp(new Variable("x")))));
+    public void testSingleIntVariableDeclaration() throws IOException {
+        assertResult(1, stmts(vardec("x", new IntType(), new IntExp(1)),
+                              printVar("x")));
+    }
+
+    @Test
+    public void testDoubleIntVariableDeclarationGetFirst() throws IOException {
+        assertResult(1, stmts(vardec("x", new IntType(), new IntExp(1)),
+                              vardec("y", new IntType(), new IntExp(2)),
+                              printVar("x")));
+    }
+
+    @Test
+    public void testDoubleIntVariableDeclarationGetSecond() throws IOException {
+        assertResult(2, stmts(vardec("x", new IntType(), new IntExp(1)),
+                              vardec("y", new IntType(), new IntExp(2)),
+                              printVar("y")));
+    }
+
+    @Test
+    public void testSingleIntAssignment() throws IOException {
+        assertResult(2, stmts(vardec("x", new IntType(), new IntExp(1)),
+                              assign("x", new IntExp(2)),
+                              printVar("x")));
+    }
+
+    @Test
+    public void testTwoIntsAssignFirst() throws IOException {
+        assertResult(3, stmts(vardec("x", new IntType(), new IntExp(1)),
+                              vardec("y", new IntType(), new IntExp(2)),
+                              assign("x", new IntExp(3)),
+                              printVar("x")));
+    }
+
+    @Test
+    public void testTwoIntsAssignSecond() throws IOException {
+        assertResult(3, stmts(vardec("x", new IntType(), new IntExp(1)),
+                              vardec("y", new IntType(), new IntExp(2)),
+                              assign("y", new IntExp(3)),
+                              printVar("y")));
     }
 }
