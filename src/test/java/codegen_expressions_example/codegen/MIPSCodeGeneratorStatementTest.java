@@ -16,6 +16,14 @@ import org.junit.Rule;
 import org.junit.rules.TestName;
 
 public class MIPSCodeGeneratorStatementTest {
+    final Map<StructureName, LinkedHashMap<FieldName, Type>> TWO_INTS =
+        new HashMap<StructureName, LinkedHashMap<FieldName, Type>>() {{
+            put(new StructureName("Foo"), new LinkedHashMap<FieldName, Type>() {{
+                put(new FieldName("x"), new IntType());
+                put(new FieldName("y"), new IntType());
+            }});
+        }};
+
     @Rule public TestName name = new TestName();
     
     // TODO: code duplication with MIPSCodeGeneratorTest
@@ -53,7 +61,7 @@ public class MIPSCodeGeneratorStatementTest {
             }
             testPassed = true;
         } finally {
-            if (wantToSaveFile && testPassed) {
+            if (!wantToSaveFile || testPassed) {
                 file.delete();
             }
         }
@@ -126,5 +134,18 @@ public class MIPSCodeGeneratorStatementTest {
                               vardec("y", new IntType(), new IntExp(2)),
                               assign("y", new IntExp(3)),
                               printVar("y")));
+    }
+
+    @Test
+    public void testDeclareStructureGetFirst() throws IOException {
+        assertResult(1, stmts(vardec("x",
+                                     new StructureType(new StructureName("Foo")),
+                                     new MakeStructureExp(new StructureName("Foo"),
+                                                          new Exp[] {
+                                                              new IntExp(1),
+                                                              new IntExp(2)
+                                                          })),
+                              new PrintStmt(new FieldAccessExp(new VariableExp(new Variable("x")),
+                                                               new FieldName("x")))));
     }
 }
