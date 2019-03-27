@@ -322,8 +322,8 @@ public class MIPSCodeGenerator {
         final MIPSRegister sp = MIPSRegister.SP;
         final MIPSRegister t0 = MIPSRegister.T0;
         for (int subAmount = 0; subAmount < accessSize; subAmount += 4) {
-            add(new Lw(t0, offset - subAmount, sp));
-            add(new Sw(t0, finalSpMove - subAmount, sp));
+            add(new Lw(t0, offset + subAmount, sp));
+            add(new Sw(t0, finalSpMove + subAmount, sp));
         }
 
         add(new Addi(sp, sp, finalSpMove));
