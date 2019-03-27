@@ -381,7 +381,10 @@ public class MIPSCodeGenerator {
     }
 
     public void compileAddressOfExp(final AddressOfExp exp) {
-        assert(false);
+        final int offset = lhsOffset(exp.lhs);
+        final MIPSRegister t0 = MIPSRegister.T0;
+        add(new Addi(t0, MIPSRegister.SP, offset));
+        push(t0);
     }
     
     public void compileExpression(final Exp exp) {
