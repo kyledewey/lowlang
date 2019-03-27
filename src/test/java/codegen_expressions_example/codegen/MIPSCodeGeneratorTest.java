@@ -295,17 +295,17 @@ public class MIPSCodeGeneratorTest {
         //   int z;
         //   struct Bar f;
         // };
-        // Foo(Bar(1, 2), 3).f.x
+        // Foo(1, Bar(2, 3)).f.x
 
         final Exp baseExp =
             new MakeStructureExp(new StructureName("Foo"),
                                  new Exp[] {
+                                     new IntExp(1),
                                      new MakeStructureExp(new StructureName("Bar"),
                                                           new Exp[] {
-                                                              new IntExp(1),
-                                                              new IntExp(2)
-                                                          }),
-                                     new IntExp(3)
+                                                              new IntExp(2),
+                                                              new IntExp(3)
+                                                          })
                                  });
         final FieldAccessExp accessF =
             new FieldAccessExp(baseExp, new FieldName("f"));
@@ -326,7 +326,7 @@ public class MIPSCodeGeneratorTest {
                 }});
             }};
 
-        assertResult(1, accessX, structDecs);
+        assertResult(2, accessX, structDecs);
     }
 } // MIPSCodeGeneratorTest
 
