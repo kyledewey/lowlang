@@ -61,15 +61,12 @@ public class MIPSCodeGenerator {
         if (lhs instanceof VariableLhs) {
             final VariableLhs asVar = (VariableLhs)lhs;
             final int offset = variables.variableOffset(asVar.variable);
-            //System.out.println(asVar.variable.toString() + ": " + offset);
             return offset;
         } else if (lhs instanceof FieldAccessLhs) {
             final FieldAccessLhs asField = (FieldAccessLhs)lhs;
             final int offsetFromLhs = lhsOffset(asField.lhs);
             final int offsetFromField = fieldOffset(asField.getLhsStructure(),
                                                     asField.field);
-            // System.out.println("LHS OFFSET: " + offsetFromLhs);
-            // System.out.println("FIELD OFFSET: " + offsetFromField);
             return offsetFromLhs + offsetFromField;
         } else {
             assert(false);
@@ -94,7 +91,6 @@ public class MIPSCodeGenerator {
         final int size = lhsSize(stmt.lhs);
         assert(size % 4 == 0);
         final int copyToOffset = lhsOffset(stmt.lhs);
-        //System.out.println("COPY TO OFFSET: " + copyToOffset);
         
         // determine new value
         compileExpression(stmt.exp);
@@ -321,9 +317,9 @@ public class MIPSCodeGenerator {
         
         final MIPSRegister sp = MIPSRegister.SP;
         final MIPSRegister t0 = MIPSRegister.T0;
-        for (int subAmount = 0; subAmount < accessSize; subAmount += 4) {
-            add(new Lw(t0, offset + subAmount, sp));
-            add(new Sw(t0, finalSpMove + subAmount, sp));
+        for (int addAmount = accessSize - 4; addAmount >= 0; addAmount -= 4) {
+            add(new Lw(t0, offset + addAmount, sp));
+            add(new Sw(t0, finalSpMove + addAmount, sp));
         }
 
         add(new Addi(sp, sp, finalSpMove));
