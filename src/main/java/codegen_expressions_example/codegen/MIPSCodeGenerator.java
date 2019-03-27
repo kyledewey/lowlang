@@ -37,6 +37,7 @@ public class MIPSCodeGenerator {
     // specifically used in statement contexts, when a statement finishes evaluating an
     // expression inside
     private void resetExpressionOffset() {
+        assert(expressionOffset >= 0);
         assert(expressionOffset % 4 == 0);
         expressionOffset = 0;
     }
@@ -315,6 +316,8 @@ public class MIPSCodeGenerator {
         // we deallocate
         final int finalSpMove = wholeStructureSize - accessSize;
         assert(finalSpMove >= 0);
+        expressionOffset -= finalSpMove;
+        assert(expressionOffset >= 0);
         
         final MIPSRegister sp = MIPSRegister.SP;
         final MIPSRegister t0 = MIPSRegister.T0;
