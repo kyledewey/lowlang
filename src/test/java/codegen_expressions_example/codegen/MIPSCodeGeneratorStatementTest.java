@@ -153,4 +153,70 @@ public class MIPSCodeGeneratorStatementTest {
                            new PrintStmt(access)),
                      TWO_INTS);
     }
+
+    @Test
+    public void testDeclareStructureGetSecond() throws IOException {
+        final FieldAccessExp access = new FieldAccessExp(new VariableExp(new Variable("x")),
+                                                         new FieldName("y"));
+        final StructureName structName = new StructureName("Foo");
+        access.setExpStructure(structName);
+        assertResult(2,
+                     stmts(vardec("x",
+                                  new StructureType(structName),
+                                  new MakeStructureExp(structName,
+                                                       new Exp[] {
+                                                           new IntExp(1),
+                                                           new IntExp(2)
+                                                       })),
+                           new PrintStmt(access)),
+                     TWO_INTS);
+    }
+
+    @Test
+    public void testAssignSingleStructureGetFirst() throws IOException {
+        final FieldAccessExp access = new FieldAccessExp(new VariableExp(new Variable("x")),
+                                                         new FieldName("x"));
+        final StructureName structName = new StructureName("Foo");
+        access.setExpStructure(structName);
+        assertResult(3,
+                     stmts(vardec("x",
+                                  new StructureType(structName),
+                                  new MakeStructureExp(structName,
+                                                       new Exp[] {
+                                                           new IntExp(1),
+                                                           new IntExp(2)
+                                                       })),
+                           assign("x",
+                                  new MakeStructureExp(structName,
+                                                       new Exp[] {
+                                                           new IntExp(3),
+                                                           new IntExp(4)
+                                                       })),
+                           new PrintStmt(access)),
+                     TWO_INTS);
+    }
+                                  
+    @Test
+    public void testAssignSingleStructureGetSecond() throws IOException {
+        final FieldAccessExp access = new FieldAccessExp(new VariableExp(new Variable("x")),
+                                                         new FieldName("y"));
+        final StructureName structName = new StructureName("Foo");
+        access.setExpStructure(structName);
+        assertResult(4,
+                     stmts(vardec("x",
+                                  new StructureType(structName),
+                                  new MakeStructureExp(structName,
+                                                       new Exp[] {
+                                                           new IntExp(1),
+                                                           new IntExp(2)
+                                                       })),
+                           assign("x",
+                                  new MakeStructureExp(structName,
+                                                       new Exp[] {
+                                                           new IntExp(3),
+                                                           new IntExp(4)
+                                                       })),
+                           new PrintStmt(access)),
+                     TWO_INTS);
+    }                     
 }

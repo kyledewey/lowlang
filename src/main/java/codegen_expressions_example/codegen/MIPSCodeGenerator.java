@@ -90,7 +90,7 @@ public class MIPSCodeGenerator {
 
         for (int base = 0; base < size; base += 4) {
             final MIPSRegister t0 = MIPSRegister.T0;
-            add(new Lw(t0, -(base + 4), sp));
+            add(new Lw(t0, -(size - base), sp));
             add(new Sw(t0, copyToOffset + base, sp));
         }
     }
