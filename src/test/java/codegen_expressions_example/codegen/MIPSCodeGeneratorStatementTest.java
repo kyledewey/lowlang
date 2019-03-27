@@ -12,8 +12,12 @@ import java.io.IOException;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertEquals;
 import org.junit.Test;
+import org.junit.Rule;
+import org.junit.rules.TestName;
 
 public class MIPSCodeGeneratorStatementTest {
+    @Rule public TestName name = new TestName();
+    
     // TODO: code duplication with MIPSCodeGeneratorTest
     public int parseOutput(final String[] spimOutput) {
         assert(spimOutput.length == 2);
@@ -29,7 +33,9 @@ public class MIPSCodeGeneratorStatementTest {
                              final Map<StructureName, LinkedHashMap<FieldName, Type>> structDecs) throws IOException {
         boolean wantToSaveFile = false; // for debugging
 
-        final File file = File.createTempFile("test", ".asm");
+        final File file = File.createTempFile(name.getMethodName(),
+                                              ".asm",
+                                              new File("testPrograms"));
         boolean testPassed = false;
         try {
             final MIPSCodeGenerator gen = new MIPSCodeGenerator(structDecs);
