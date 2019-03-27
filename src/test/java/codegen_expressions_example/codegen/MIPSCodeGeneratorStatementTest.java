@@ -39,7 +39,7 @@ public class MIPSCodeGeneratorStatementTest {
     public void assertResult(final int expected,
                              final Stmt stmt,
                              final Map<StructureName, LinkedHashMap<FieldName, Type>> structDecs) throws IOException {
-        boolean wantToSaveFile = false; // for debugging
+        boolean wantToSaveFile = true; // for debugging
 
         final File file = File.createTempFile(name.getMethodName(),
                                               ".asm",
@@ -138,14 +138,19 @@ public class MIPSCodeGeneratorStatementTest {
 
     @Test
     public void testDeclareStructureGetFirst() throws IOException {
-        assertResult(1, stmts(vardec("x",
-                                     new StructureType(new StructureName("Foo")),
-                                     new MakeStructureExp(new StructureName("Foo"),
-                                                          new Exp[] {
-                                                              new IntExp(1),
-                                                              new IntExp(2)
-                                                          })),
-                              new PrintStmt(new FieldAccessExp(new VariableExp(new Variable("x")),
-                                                               new FieldName("x")))));
+        final FieldAccessExp access = new FieldAccessExp(new VariableExp(new Variable("x")),
+                                                         new FieldName("x"));
+        final StructureName structName = new StructureName("Foo");
+        access.setExpStructure(structName);
+        assertResult(1,
+                     stmts(vardec("x",
+                                  new StructureType(structName),
+                                  new MakeStructureExp(structName,
+                                                       new Exp[] {
+                                                           new IntExp(1),
+                                                           new IntExp(2)
+                                                       })),
+                           new PrintStmt(access)),
+                     TWO_INTS);
     }
 }

@@ -36,7 +36,7 @@ public class MIPSCodeGenerator {
     // specifically used in statement contexts, when a statement finishes evaluating an
     // expression inside
     private void resetExpressionOffset() {
-        assert(expressionOffset == 4);
+        assert(expressionOffset % 4 == 0);
         expressionOffset = 0;
     }
     
