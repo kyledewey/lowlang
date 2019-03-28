@@ -99,24 +99,23 @@ public class MIPSCodeGenerator {
     public void compileAssignmentStmt(final AssignmentStmt stmt) {        
         // determine new value
         compileExpression(stmt.exp);
-        resetExpressionOffset();
 
         // establish where we're going to copy
         final int size = lhsSize(stmt.lhs);
         assert(size % 4 == 0);
         final MIPSRegister t0 = MIPSRegister.T0;
         putLhsAddressIntoRegister(t0, stmt.lhs);
+        resetExpressionOffset();
 
         // copy this value into the variable
-        // first, deallocate the stack pointer, to line up with the variables
         final MIPSRegister sp = MIPSRegister.SP;
-        add(new Addi(sp, sp, size));
-
         for (int base = 0; base < size; base += 4) {
             final MIPSRegister t1 = MIPSRegister.T1;
-            add(new Lw(t1, -(size - base), sp));
-            add(new Sw(t1, base + size, t0));
+            add(new Lw(t1, base, sp));
+            add(new Sw(t1, base, t0));
         }
+
+        add(new Addi(sp, sp, size));
     }
 
     public void printA0() {
