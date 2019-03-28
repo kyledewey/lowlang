@@ -23,13 +23,13 @@ import java.io.IOException;
 //
 public class MIPSCodeGenerator {
     private final Map<StructureName, LinkedHashMap<FieldName, Type>> structDecs;
-    private final List<MIPSInstruction> instructions;
+    private final List<MIPSEntry> entries;
     private final VariableTable variables;
     private int expressionOffset;
     
     public MIPSCodeGenerator(final Map<StructureName, LinkedHashMap<FieldName, Type>> structDecs) {
         this.structDecs = structDecs;
-        instructions = new ArrayList<MIPSInstruction>();
+        entries = new ArrayList<MIPSEntry>();
         variables = new VariableTable();
         expressionOffset = 0;
     }
@@ -173,8 +173,8 @@ public class MIPSCodeGenerator {
         }
     } // sizeof
 
-    public void add(final MIPSInstruction i) {
-        instructions.add(i);
+    public void add(final MIPSEntry i) {
+        entries.add(i);
     } // add
 
     // pushes the contents of this register onto the stack
@@ -426,8 +426,8 @@ public class MIPSCodeGenerator {
         }
     } // compileExpression
 
-    public MIPSInstruction[] getInstructions() {
-        return instructions.toArray(new MIPSInstruction[instructions.size()]);
+    public MIPSEntry[] getEntries() {
+        return entries.toArray(new MIPSInstruction[entries.size()]);
     } // getInstructions
 
     private void mainEnd(final boolean printTopOfStack) {
@@ -452,8 +452,8 @@ public class MIPSCodeGenerator {
             output.println(MIPSInstruction.INDENT + ".asciiz \"\\n\"");
             output.println(".text");
             output.println("main:");
-            for (final MIPSInstruction instruction : instructions) {
-                output.println(instruction.toString());
+            for (final MIPSEntry entry : entries) {
+                output.println(entry.toString());
             }
         } finally {
             output.close();
