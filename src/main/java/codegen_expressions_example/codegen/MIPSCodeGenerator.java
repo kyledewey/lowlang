@@ -270,6 +270,8 @@ public class MIPSCodeGenerator {
             add(new Lw(t1, offset, t0));
             add(new Sw(t1, offset, sp));
         }
+
+        expressionOffset += loadSize;
     } // compileDereferenceExp
     
     public void compileMakeStructureExp(final MakeStructureExp exp) {
