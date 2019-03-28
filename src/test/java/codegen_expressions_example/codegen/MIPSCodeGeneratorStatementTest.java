@@ -616,4 +616,24 @@ public class MIPSCodeGeneratorStatementTest {
                            new PrintStmt(accessYExp)),
                      DOUBLE_TWO_INTS);
     }
+
+    @Test
+    public void testDereferenceInt() throws IOException {
+        // x = 5;
+        // p = &x;
+        // print(*p);
+
+        final DereferenceExp deref =
+            new DereferenceExp(new VariableExp(new Variable("p")));
+        deref.setExpType(new PointerType(new IntType()));
+
+        assertResult(5,
+                     stmts(vardec("x",
+                                  new IntType(),
+                                  new IntExp(5)),
+                           vardec("p",
+                                  new PointerType(new IntType()),
+                                  new AddressOfExp(new VariableLhs(new Variable("x")))),
+                           new PrintStmt(deref)));
+    }
 }
