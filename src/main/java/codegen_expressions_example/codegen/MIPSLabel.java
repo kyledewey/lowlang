@@ -11,7 +11,7 @@ public class MIPSLabel implements MIPSEntry {
     }
 
     public String toString() {
-        return baseName + id;
+        return baseName + id + ":";
     }
 
     public boolean equals(final Object other) {

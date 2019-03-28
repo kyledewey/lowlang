@@ -22,13 +22,17 @@ import java.io.IOException;
 // usually available as a binary package though your distribution / Homebrew
 //
 public class MIPSCodeGenerator {
+    public static final Variable RA_VARIABLE = new Variable("$ra");
     private final Map<StructureName, LinkedHashMap<FieldName, Type>> structDecs;
+    private final Map<FunctionName, FunctionDefinition> functionDefs;
     private final List<MIPSEntry> entries;
     private final VariableTable variables;
     private int expressionOffset;
     
-    public MIPSCodeGenerator(final Map<StructureName, LinkedHashMap<FieldName, Type>> structDecs) {
+    public MIPSCodeGenerator(final Map<StructureName, LinkedHashMap<FieldName, Type>> structDecs,
+                             final Map<FunctionName, FunctionDefinition> functionDefs) {
         this.structDecs = structDecs;
+        this.functionDefs = functionDefs;
         entries = new ArrayList<MIPSEntry>();
         variables = new VariableTable();
         expressionOffset = 0;
@@ -40,6 +44,79 @@ public class MIPSCodeGenerator {
         assert(expressionOffset >= 0);
         assert(expressionOffset % 4 == 0);
         expressionOffset = 0;
+    }
+
+    public static boolean containsReturn(final Stmt stmt) {
+        if (stmt instanceof VariableDeclarationInitializationStmt ||
+            stmt instanceof AssignmentStmt ||
+            stmt instanceof PrintStmt) {
+            return false;
+        } else if (stmt instanceof SequenceStmt) {
+            final SequenceStmt asSeq = (SequenceStmt)stmt;
+            return containsReturn(stmt.first) || containsReturn(stmt.second);
+        } else if (stmt instanceof ReturnVoidStmt ||
+                   stmt instanceof ReturnExpStmt) {
+            return true;
+        }
+    }
+
+    private void doReturn(final Type returnType) {
+        // the stack looks like the following at this point:
+        //
+        // before_call
+        // argument1
+        // argument2
+        // ...
+        // argumentN
+        // return_address
+        // return_value
+        //
+        //
+        // we need to adjust it so it looks like the following:
+        //
+        // before_call
+        // return_value
+        //
+
+        // TODO: stopped here.  I'm out of steam.
+    }
+    
+    private void returnVoid() {
+        final int offset = variableOffset(RA_VARIABLE);
+        final MIPSRegister t0 = MIPSRegister.T0;
+        add(new Lw(t0, offset, MIPSRegister.SP));
+        add(new Jr(t0));
+    }
+    
+    public void compileFunctionDefinition(final FunctionDefinition def) {
+        assert(expressionOffset == 0);
+        assert(variables.isEmpty());
+        
+        add(functionNameToLabel(def.name));
+        
+        final VariableDeclaration[] params = def.parameters;
+        for (int index = params.length - 1; index >= 0; index--) {
+            final VariableDeclaration current = params[index];
+            variables.pushVariable(current.variable,
+                                   current.type,
+                                   sizeof(current.type));
+        }
+
+        // return address always follows parameters
+        // we treat this like a special variable
+        push(MIPSRegister.RA);
+        variables.pushVariable(RA_VARIABLE,
+                               new PointerType(VoidType()), // meaningless
+                               4);
+        resetExpressionOffset();
+        compileStatement(def.body);
+
+        // return will handle putting the return value on the stack
+        // return is not always requires, so see if we need to put one here
+        if (!containsReturn(def.body)) {
+            returnVoid();
+        variables.clear();
+        resetExpressionOffset();
     }
     
     public void compileVariableDeclarationInitializationStmt(final VariableDeclarationInitializationStmt stmt) {
@@ -395,7 +472,29 @@ public class MIPSCodeGenerator {
         putLhsAddressIntoRegister(t0, exp.lhs);
         push(t0);
     }
+
+    public static MIPSLabel functionNameToLabel(final FunctionName name) {
+        return new MIPSLabel(name.name, 0);
+    }
     
+    // TODO: this does not conform to the typical MIPS calling convention;
+    // it puts all arguments on the stack, and returns on the stack, ignoring
+    // the $a* and $v* registers
+    public void compileFunctionCallExp(final FunctionCallExp exp) {
+        final int originalExpressionOffset = expressionOffset;
+
+        // last argument will be on top of the stack
+        for (final Exp parameter : exp.parameters) {
+            compileExpression(parameter);
+        }
+
+        add(new Jal(functionNameToLabel(exp.name)));
+
+        // return value is on stack
+        final int returnTypeSize = sizeof(functionDefs.get(exp.name).returnType);
+        expressionOffset = originalExpressionOffset + returnTypeSize;
+    }
+
     public void compileExpression(final Exp exp) {
         if (exp instanceof IntExp) {
             compileIntExp((IntExp)exp);
@@ -419,6 +518,8 @@ public class MIPSCodeGenerator {
             compileAddressOfExp((AddressOfExp)exp);
         } else if (exp instanceof MakeStructureExp) {
             compileMakeStructureExp((MakeStructureExp)exp);
+        } else if (exp instanceof FunctionCallExp) {
+            compileFunctionCallExp((FunctionCallExp)exp);
         } else if (exp instanceof FieldAccessExp) {
             compileFieldAccessExp((FieldAccessExp)exp);
         } else {

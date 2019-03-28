@@ -53,4 +53,12 @@ public class VariableTable {
         assert(false);
         return 0;
     }
+
+    public boolean isEmpty() {
+        return variables.isEmpty();
+    }
+
+    public void clear() {
+        variables.clear();
+    }
 } // VariableTable
