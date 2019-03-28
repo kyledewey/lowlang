@@ -413,4 +413,207 @@ public class MIPSCodeGeneratorStatementTest {
                                   new IntExp(7)),
                            printVar("x")));
     }
+
+    @Test
+    public void testAssignFirstFieldThroughPointer() throws IOException {
+        // x = TwoInts(1, 2);
+        // p = &x.x;
+        // *p = 3;
+        // print(x.x);
+
+        final DereferenceLhs deref = new DereferenceLhs(new VariableLhs(new Variable("p")));
+        deref.setTypeAfterDereference(new IntType());
+        final StructureName structName = new StructureName("TwoInts");
+        final FieldAccessExp accessExp = new FieldAccessExp(new VariableExp(new Variable("x")),
+                                                            new FieldName("x"));
+        accessExp.setExpStructure(structName);
+        final FieldAccessLhs accessLhs = new FieldAccessLhs(new VariableLhs(new Variable("x")),
+                                                            new FieldName("x"));
+        accessLhs.setLhsStructure(structName);
+
+        assertResult(3,
+                     stmts(vardec("x",
+                                  new StructureType(structName),
+                                  new MakeStructureExp(structName,
+                                                       new Exp[] {
+                                                           new IntExp(1),
+                                                           new IntExp(2)
+                                                       })),
+                           vardec("p",
+                                  new PointerType(new IntType()),
+                                  new AddressOfExp(accessLhs)),
+                           assign(deref,
+                                  new IntExp(3)),
+                           new PrintStmt(accessExp)),
+                     TWO_INTS);
+    }
+
+    @Test
+    public void testAssignSecondFieldThroughPointer() throws IOException {
+        // x = TwoInts(1, 2);
+        // p = &x.y;
+        // *p = 3;
+        // print(x.y);
+
+        final DereferenceLhs deref = new DereferenceLhs(new VariableLhs(new Variable("p")));
+        deref.setTypeAfterDereference(new IntType());
+        final StructureName structName = new StructureName("TwoInts");
+        final FieldAccessExp accessExp = new FieldAccessExp(new VariableExp(new Variable("x")),
+                                                            new FieldName("y"));
+        accessExp.setExpStructure(structName);
+        final FieldAccessLhs accessLhs = new FieldAccessLhs(new VariableLhs(new Variable("x")),
+                                                            new FieldName("y"));
+        accessLhs.setLhsStructure(structName);
+
+        assertResult(3,
+                     stmts(vardec("x",
+                                  new StructureType(structName),
+                                  new MakeStructureExp(structName,
+                                                       new Exp[] {
+                                                           new IntExp(1),
+                                                           new IntExp(2)
+                                                       })),
+                           vardec("p",
+                                  new PointerType(new IntType()),
+                                  new AddressOfExp(accessLhs)),
+                           assign(deref,
+                                  new IntExp(3)),
+                           new PrintStmt(accessExp)),
+                     TWO_INTS);
+    }
+
+    @Test
+    public void testAssignStructureThroughPointer() throws IOException {
+        // x = TwoInts(1, 2)
+        // p = &x
+        // *p = TwoInts(3, 4)
+        // print(x.x)
+
+        final StructureName structName = new StructureName("TwoInts");
+        final DereferenceLhs deref = new DereferenceLhs(new VariableLhs(new Variable("p")));
+        deref.setTypeAfterDereference(new StructureType(structName));
+        final FieldAccessExp accessExp = new FieldAccessExp(new VariableExp(new Variable("x")),
+                                                            new FieldName("x"));
+        accessExp.setExpStructure(structName);
+
+        assertResult(3,
+                     stmts(vardec("x",
+                                  new StructureType(structName),
+                                  new MakeStructureExp(structName,
+                                                       new Exp[] {
+                                                           new IntExp(1),
+                                                           new IntExp(2)
+                                                       })),
+                           vardec("p",
+                                  new PointerType(new StructureType(structName)),
+                                  new AddressOfExp(new VariableLhs(new Variable("x")))),
+                           assign(deref,
+                                  new MakeStructureExp(structName,
+                                                       new Exp[] {
+                                                           new IntExp(3),
+                                                           new IntExp(4)
+                                                       })),
+                           new PrintStmt(accessExp)),
+                     TWO_INTS);
+    }
+
+    @Test
+    public void testAssignNestedStructureThroughPointerFirst() throws IOException {
+        // x = FourInts(TwoInts(1, 2), TwoInts(3, 4));
+        // p = &x.first;
+        // *p = TwoInts(5, 6);
+        // print(x.first.y)
+
+        final StructureName twoInts = new StructureName("TwoInts");
+        final StructureName fourInts = new StructureName("FourInts");
+        final DereferenceLhs deref = new DereferenceLhs(new VariableLhs(new Variable("p")));
+        deref.setTypeAfterDereference(new StructureType(twoInts));
+        final FieldAccessExp accessFirstExp = new FieldAccessExp(new VariableExp(new Variable("x")),
+                                                                 new FieldName("first"));
+        accessFirstExp.setExpStructure(fourInts);
+        final FieldAccessExp accessYExp = new FieldAccessExp(accessFirstExp,
+                                                             new FieldName("y"));
+        accessYExp.setExpStructure(twoInts);
+        final FieldAccessLhs accessFirstLhs = new FieldAccessLhs(new VariableLhs(new Variable("x")),
+                                                                 new FieldName("first"));
+        accessFirstLhs.setLhsStructure(fourInts);
+
+        assertResult(6,
+                     stmts(vardec("x",
+                                  new StructureType(fourInts),
+                                  new MakeStructureExp(fourInts,
+                                                       new Exp[] {
+                                                           new MakeStructureExp(twoInts,
+                                                                                new Exp[] {
+                                                                                    new IntExp(1),
+                                                                                    new IntExp(2)
+                                                                                }),
+                                                           new MakeStructureExp(twoInts,
+                                                                                new Exp[] {
+                                                                                    new IntExp(3),
+                                                                                    new IntExp(4)
+                                                                                })
+                                                       })),
+                           vardec("p",
+                                  new PointerType(new StructureType(twoInts)),
+                                  new AddressOfExp(accessFirstLhs)),
+                           assign(deref,
+                                  new MakeStructureExp(twoInts,
+                                                       new Exp[] {
+                                                           new IntExp(5),
+                                                           new IntExp(6)
+                                                       })),
+                           new PrintStmt(accessYExp)),
+                     DOUBLE_TWO_INTS);
+    }
+
+    @Test
+    public void testAssignNestedStructureThroughPointerSecond() throws IOException {
+        // x = FourInts(TwoInts(1, 2), TwoInts(3, 4));
+        // p = &x.second;
+        // *p = TwoInts(5, 6);
+        // print(x.second.x)
+
+        final StructureName twoInts = new StructureName("TwoInts");
+        final StructureName fourInts = new StructureName("FourInts");
+        final DereferenceLhs deref = new DereferenceLhs(new VariableLhs(new Variable("p")));
+        deref.setTypeAfterDereference(new StructureType(twoInts));
+        final FieldAccessExp accessSecondExp = new FieldAccessExp(new VariableExp(new Variable("x")),
+                                                                  new FieldName("second"));
+        accessSecondExp.setExpStructure(fourInts);
+        final FieldAccessExp accessYExp = new FieldAccessExp(accessSecondExp,
+                                                             new FieldName("x"));
+        accessYExp.setExpStructure(twoInts);
+        final FieldAccessLhs accessSecondLhs = new FieldAccessLhs(new VariableLhs(new Variable("x")),
+                                                                  new FieldName("second"));
+        accessSecondLhs.setLhsStructure(fourInts);
+
+        assertResult(5,
+                     stmts(vardec("x",
+                                  new StructureType(fourInts),
+                                  new MakeStructureExp(fourInts,
+                                                       new Exp[] {
+                                                           new MakeStructureExp(twoInts,
+                                                                                new Exp[] {
+                                                                                    new IntExp(1),
+                                                                                    new IntExp(2)
+                                                                                }),
+                                                           new MakeStructureExp(twoInts,
+                                                                                new Exp[] {
+                                                                                    new IntExp(3),
+                                                                                    new IntExp(4)
+                                                                                })
+                                                       })),
+                           vardec("p",
+                                  new PointerType(new StructureType(twoInts)),
+                                  new AddressOfExp(accessSecondLhs)),
+                           assign(deref,
+                                  new MakeStructureExp(twoInts,
+                                                       new Exp[] {
+                                                           new IntExp(5),
+                                                           new IntExp(6)
+                                                       })),
+                           new PrintStmt(accessYExp)),
+                     DOUBLE_TWO_INTS);
+    }
 }
