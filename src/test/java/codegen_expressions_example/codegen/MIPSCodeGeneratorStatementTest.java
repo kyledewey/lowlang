@@ -636,4 +636,34 @@ public class MIPSCodeGeneratorStatementTest {
                                   new AddressOfExp(new VariableLhs(new Variable("x")))),
                            new PrintStmt(deref)));
     }
+
+    @Test
+    public void testDereferenceStructure() throws IOException {
+        // x = TwoInts(1, 2);
+        // p = &x;
+        // print((*p).y);
+
+        final DereferenceExp derefExp =
+            new DereferenceExp(new VariableExp(new Variable("p")));
+        derefExp.setExpType(new PointerType(new IntType()));
+
+        final StructureName twoInts = new StructureName("TwoInts");
+        final FieldAccessExp accessExp =
+            new FieldAccessExp(derefExp, new FieldName("y"));
+        accessExp.setExpStructure(twoInts);
+
+        assertResult(2,
+                     stmts(vardec("x",
+                                  new StructureType(twoInts),
+                                  new MakeStructureExp(twoInts,
+                                                       new Exp[] {
+                                                           new IntExp(1),
+                                                           new IntExp(2)
+                                                       })),
+                           vardec("p",
+                                  new PointerType(new StructureType(twoInts)),
+                                  new AddressOfExp(new VariableLhs(new Variable("x")))),
+                           new PrintStmt(accessExp)),
+                     TWO_INTS);
+    }
 }
