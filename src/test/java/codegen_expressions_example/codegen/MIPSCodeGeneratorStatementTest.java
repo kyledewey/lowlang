@@ -399,7 +399,7 @@ public class MIPSCodeGeneratorStatementTest {
         // *p = 7;
         // print(x)
 
-        final DereferenceLhs deref = new DereferenceLhs(new VariableLhs(new Variable("x")));
+        final DereferenceLhs deref = new DereferenceLhs(new VariableLhs(new Variable("p")));
         deref.setTypeAfterDereference(new IntType());
         
         assertResult(7,
