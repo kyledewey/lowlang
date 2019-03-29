@@ -15,16 +15,17 @@ import java.io.IOException;
 import static org.junit.Assert.assertEquals;
 import org.junit.Test;
 
-// last function is main
+// last function is main, which is assumed a void return type
 public class MIPSCodeGeneratorFunctionTest extends MIPSCodeGeneratorTestBase<FunctionDefinition[]> {
     protected void doCompile(final MIPSCodeGenerator gen, final FunctionDefinition[] functions) {
         assert(functions.length > 0);
-        for (final FunctionDefinition def : functions) {
-            gen.compileFunctionDefinition(def);
-        }
+
+        // main needs to be first so we fall into it
         final FunctionDefinition main = functions[functions.length - 1];
-        final FunctionCallExp callMain = new FunctionCallExp(main.name, new Exp[0]);
-        gen.compilePrintStmt(new PrintStmt(callMain));
+        gen.compileFunctionDefinition(main);
+        for (int index = 0; index < functions.length - 1; index++) {
+            gen.compileFunctionDefinition(functions[index]);
+        }
     }
 
     public static Map<FunctionName, FunctionDefinition> functionMap(final FunctionDefinition[] functions) {
