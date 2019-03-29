@@ -109,7 +109,7 @@ public class MIPSCodeGenerator {
         for (int base = 0; base < expressionOffset; base += 4) {
             final MIPSRegister t0 = MIPSRegister.T0;
             add(new Lw(t0, base, sp));
-            add(new Sw(t0, copyReturnValueToOffset + base, sp));
+            add(new Sw(t0, copyReturnValueToOffset + base - 4, sp));
         }
 
         // Put sp at final position
