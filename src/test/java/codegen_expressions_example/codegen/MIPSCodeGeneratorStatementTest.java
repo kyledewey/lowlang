@@ -16,7 +16,8 @@ import org.junit.Rule;
 import org.junit.rules.TestName;
 
 public class MIPSCodeGeneratorStatementTest extends MIPSCodeGeneratorTestBase<Stmt> {
-    final Map<StructureName, LinkedHashMap<FieldName, Type>> TWO_INTS =
+    // ---BEGIN CONSTANTS---
+    public static final Map<StructureName, LinkedHashMap<FieldName, Type>> TWO_INTS =
         new HashMap<StructureName, LinkedHashMap<FieldName, Type>>() {{
             put(new StructureName("TwoInts"), new LinkedHashMap<FieldName, Type>() {{
                 put(new FieldName("x"), new IntType());
@@ -24,7 +25,7 @@ public class MIPSCodeGeneratorStatementTest extends MIPSCodeGeneratorTestBase<St
             }});
         }};
 
-    final Map<StructureName, LinkedHashMap<FieldName, Type>> DOUBLE_TWO_INTS =
+    public static final Map<StructureName, LinkedHashMap<FieldName, Type>> DOUBLE_TWO_INTS =
         new HashMap<StructureName, LinkedHashMap<FieldName, Type>>() {{
             final StructureName twoInts = new StructureName("TwoInts");
             put(twoInts, TWO_INTS.get(twoInts));
@@ -33,7 +34,8 @@ public class MIPSCodeGeneratorStatementTest extends MIPSCodeGeneratorTestBase<St
                 put(new FieldName("second"), new StructureType(twoInts));
             }});
         }};
-
+    // ---END CONSTANTS---
+    
     protected void doCompile(final MIPSCodeGenerator gen, final Stmt stmt) {
         gen.compileStatement(stmt);
     }
