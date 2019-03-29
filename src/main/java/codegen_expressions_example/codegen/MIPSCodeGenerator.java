@@ -53,14 +53,17 @@ public class MIPSCodeGenerator {
             return false;
         } else if (stmt instanceof SequenceStmt) {
             final SequenceStmt asSeq = (SequenceStmt)stmt;
-            return containsReturn(stmt.first) || containsReturn(stmt.second);
+            return containsReturn(asSeq.first) || containsReturn(asSeq.second);
         } else if (stmt instanceof ReturnVoidStmt ||
                    stmt instanceof ReturnExpStmt) {
             return true;
+        } else {
+            assert(false);
+            return false;
         }
     }
 
-    private void doReturn(final Type returnType) {
+    private void doReturn() {
         // the stack looks like the following at this point:
         //
         // before_call
@@ -69,6 +72,10 @@ public class MIPSCodeGenerator {
         // ...
         // argumentN
         // return_address
+        // local_variable_1
+        // local_variable_2
+        // ...
+        // local_variable_N
         // return_value
         //
         //
@@ -77,15 +84,32 @@ public class MIPSCodeGenerator {
         // before_call
         // return_value
         //
+        // SP_before_call = SP_current + sizeof(allVariables) + expressionOffset
+        // finalSP = SP_current + sizeof(allVariables)
+        //
 
-        // TODO: stopped here.  I'm out of steam.
-    }
-    
-    private void returnVoid() {
-        final int offset = variableOffset(RA_VARIABLE);
-        final MIPSRegister t0 = MIPSRegister.T0;
-        add(new Lw(t0, offset, MIPSRegister.SP));
-        add(new Jr(t0));
+        
+        // save return value in a register
+        final int raOffset = variables.variableOffset(RA_VARIABLE) + expressionOffset;
+        final MIPSRegister sp = MIPSRegister.SP;
+        final MIPSRegister ra = MIPSRegister.RA;
+        add(new Lw(ra, raOffset, sp));
+
+        // copy return value to correct place
+        final int sizeOfAllVariables = variables.totalSizeOfAllVariables();
+        final int copyReturnValueToOffset =
+            sizeOfAllVariables + expressionOffset;
+        for (int base = 0; base < expressionOffset; base += 4) {
+            final MIPSRegister t0 = MIPSRegister.T0;
+            add(new Lw(t0, expressionOffset + base, sp));
+            add(new Sw(t0, copyReturnValueToOffset + base, sp));
+        }
+
+        // Put sp at final position
+        add(new Addi(sp, sp, sizeOfAllVariables));
+
+        // do the return
+        add(new Jr(ra));
     }
     
     public void compileFunctionDefinition(final FunctionDefinition def) {
@@ -106,7 +130,7 @@ public class MIPSCodeGenerator {
         // we treat this like a special variable
         push(MIPSRegister.RA);
         variables.pushVariable(RA_VARIABLE,
-                               new PointerType(VoidType()), // meaningless
+                               new PointerType(new VoidType()), // meaningless
                                4);
         resetExpressionOffset();
         compileStatement(def.body);
@@ -114,7 +138,9 @@ public class MIPSCodeGenerator {
         // return will handle putting the return value on the stack
         // return is not always requires, so see if we need to put one here
         if (!containsReturn(def.body)) {
-            returnVoid();
+            assert(expressionOffset == 0);
+            doReturn();
+        }
         variables.clear();
         resetExpressionOffset();
     }
@@ -212,6 +238,15 @@ public class MIPSCodeGenerator {
         pop(MIPSRegister.A0);
         printA0();
     }
+
+    public void compileReturnExpStmt(final ReturnExpStmt stmt) {
+        compileExpression(stmt.exp);
+        doReturn();
+    }
+
+    public void compileReturnVoidStmt(final ReturnVoidStmt stmt) {
+        doReturn();
+    }
     
     public void compileStatement(final Stmt stmt) {
         if (stmt instanceof VariableDeclarationInitializationStmt) {
@@ -222,6 +257,10 @@ public class MIPSCodeGenerator {
             compileSequenceStmt((SequenceStmt)stmt);
         } else if (stmt instanceof PrintStmt) {
             compilePrintStmt((PrintStmt)stmt);
+        } else if (stmt instanceof ReturnExpStmt) {
+            compileReturnExpStmt((ReturnExpStmt)stmt);
+        } else if (stmt instanceof ReturnVoidStmt) {
+            compileReturnVoidStmt((ReturnVoidStmt)stmt);
         } else {
             assert(false);
         }
@@ -229,10 +268,12 @@ public class MIPSCodeGenerator {
     
     // for simplicity, bools and chars are 4 bytes
     public int sizeof(final Type type) {
-        if (type instanceof IntType ||
-            type instanceof BoolType ||
-            type instanceof CharType ||
-            type instanceof PointerType) { // 32-bit word
+        if (type instanceof VoidType) {
+            return 0;
+        } else if (type instanceof IntType ||
+                   type instanceof BoolType ||
+                   type instanceof CharType ||
+                   type instanceof PointerType) { // 32-bit word
             return 4;
         } else if (type instanceof StructureType) {
             final LinkedHashMap<FieldName, Type> fields =

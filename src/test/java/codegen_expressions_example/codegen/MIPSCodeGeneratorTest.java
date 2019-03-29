@@ -37,7 +37,8 @@ public class MIPSCodeGeneratorTest {
                                               new File("testPrograms"));
         boolean testPassed = false;
         try {
-            final MIPSCodeGenerator gen = new MIPSCodeGenerator(structDecs);
+            final MIPSCodeGenerator gen = new MIPSCodeGenerator(structDecs,
+                                                                new HashMap<FunctionName, FunctionDefinition>());
             gen.compileExpression(exp);
             gen.writeCompleteFile(file, true);
             final String[] output = SPIMRunner.runFile(file);

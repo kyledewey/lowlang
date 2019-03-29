@@ -54,6 +54,15 @@ public class VariableTable {
         return 0;
     }
 
+    public int totalSizeOfAllVariables() {
+        int result = 0;
+
+        for (final VariableEntry entry : variables) {
+            result += entry.size;
+        }
+        return result;
+    }
+    
     public boolean isEmpty() {
         return variables.isEmpty();
     }
