@@ -10,8 +10,12 @@ public class MIPSLabel implements MIPSEntry {
         this.id = id;
     }
 
+    public String getName() {
+        return baseName + id;
+    }
+    
     public String toString() {
-        return baseName + id + ":";
+        return getName() + ":";
     }
 
     public boolean equals(final Object other) {

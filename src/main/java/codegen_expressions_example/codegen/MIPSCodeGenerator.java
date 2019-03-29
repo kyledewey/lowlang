@@ -22,12 +22,19 @@ import java.io.IOException;
 // usually available as a binary package though your distribution / Homebrew
 //
 public class MIPSCodeGenerator {
+    // ---BEGIN CONSTANTS---
+    // placeholder variable for return addresses
     public static final Variable RA_VARIABLE = new Variable("$ra");
+    public static final FunctionName REAL_MAIN = new FunctionName("$REAL_MAIN");
+    // ---END CONSTANTS
+
+    // ---BEGIN INSTANCE VARIABLES---
     private final Map<StructureName, LinkedHashMap<FieldName, Type>> structDecs;
     private final Map<FunctionName, FunctionDefinition> functionDefs;
     private final List<MIPSEntry> entries;
     private final VariableTable variables;
     private int expressionOffset;
+    // ---END INSTANCE VARIABLES
     
     public MIPSCodeGenerator(final Map<StructureName, LinkedHashMap<FieldName, Type>> structDecs,
                              final Map<FunctionName, FunctionDefinition> functionDefs) {
@@ -101,7 +108,7 @@ public class MIPSCodeGenerator {
             sizeOfAllVariables + expressionOffset;
         for (int base = 0; base < expressionOffset; base += 4) {
             final MIPSRegister t0 = MIPSRegister.T0;
-            add(new Lw(t0, expressionOffset + base, sp));
+            add(new Lw(t0, base, sp));
             add(new Sw(t0, copyReturnValueToOffset + base, sp));
         }
 
@@ -110,6 +117,20 @@ public class MIPSCodeGenerator {
 
         // do the return
         add(new Jr(ra));
+    }
+
+    // will create a wrapper that calls this function and then exits
+    public void compileMainFunctionDefinition(final FunctionDefinition def) {
+        assert(def.returnType.equals(new VoidType()));
+        assert(def.name.name.equals("main"));
+        assert(def.parameters.length == 0);
+
+        // call into the user's main and then exit
+        add(functionNameToLabel(REAL_MAIN));
+        compileFunctionCallExp(new FunctionCallExp(def.name, new Exp[0]));
+        mainEnd();
+        
+        compileFunctionDefinition(def);
     }
     
     public void compileFunctionDefinition(final FunctionDefinition def) {
@@ -240,10 +261,13 @@ public class MIPSCodeGenerator {
     public void compileReturnExpStmt(final ReturnExpStmt stmt) {
         compileExpression(stmt.exp);
         doReturn();
+        resetExpressionOffset();
     }
 
     public void compileReturnVoidStmt(final ReturnVoidStmt stmt) {
+        assert(expressionOffset == 0);
         doReturn();
+        assert(expressionOffset == 0);
     }
     
     public void compileStatement(final Stmt stmt) {

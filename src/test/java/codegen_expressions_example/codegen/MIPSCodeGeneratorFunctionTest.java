@@ -22,7 +22,7 @@ public class MIPSCodeGeneratorFunctionTest extends MIPSCodeGeneratorTestBase<Fun
 
         // main needs to be first so we fall into it
         final FunctionDefinition main = functions[functions.length - 1];
-        gen.compileFunctionDefinition(main);
+        gen.compileMainFunctionDefinition(main);
         for (int index = 0; index < functions.length - 1; index++) {
             gen.compileFunctionDefinition(functions[index]);
         }
@@ -53,23 +53,56 @@ public class MIPSCodeGeneratorFunctionTest extends MIPSCodeGeneratorTestBase<Fun
                       functions);
     }
 
+    public static FunctionDefinition mkMain(final Stmt stmt) {
+        return new FunctionDefinition(new VoidType(),
+                                      new FunctionName("main"),
+                                      new VariableDeclaration[0],
+                                      stmt);
+    }
     @Test
     public void testPrintConstantExplicitReturn() throws IOException {
         assertResultF(1,
-                      new FunctionDefinition(new VoidType(),
-                                             new FunctionName("main"),
-                                             new VariableDeclaration[0],
-                                             stmts(new PrintStmt(new IntExp(1)),
-                                                   new ReturnVoidStmt())));
+                      mkMain(stmts(new PrintStmt(new IntExp(1)),
+                                   new ReturnVoidStmt())));
     }
 
     @Test
     public void testPrintConstantImplicitReturn() throws IOException {
         assertResultF(1,
-                      new FunctionDefinition(new VoidType(),
-                                             new FunctionName("main"),
+                      mkMain(new PrintStmt(new IntExp(1))));
+    }
+
+    @Test
+    public void testCallFunctionReturnsConstantInt() throws IOException {
+        final FunctionName foo = new FunctionName("foo");
+        assertResultF(1,
+                      new FunctionDefinition(new IntType(),
+                                             foo,
                                              new VariableDeclaration[0],
-                                             new PrintStmt(new IntExp(1))));
+                                             new ReturnExpStmt(new IntExp(1))),
+                      mkMain(new PrintStmt(new FunctionCallExp(foo, new Exp[0]))));
+    }
+
+    @Test
+    public void testCallFunctionAddsParams() throws IOException {
+        final FunctionName foo = new FunctionName("foo");
+        final Variable x = new Variable("x");
+        final Variable y = new Variable("y");
+        assertResultF(3,
+                      new FunctionDefinition(new IntType(),
+                                             foo,
+                                             new VariableDeclaration[] {
+                                                 new VariableDeclaration(new IntType(), x),
+                                                 new VariableDeclaration(new IntType(), y)
+                                             },
+                                             new ReturnExpStmt(new BinopExp(new VariableExp(x),
+                                                                            new PlusOp(),
+                                                                            new VariableExp(y)))),
+                      mkMain(new PrintStmt(new FunctionCallExp(foo,
+                                                               new Exp[] {
+                                                                   new IntExp(1),
+                                                                   new IntExp(2)
+                                                               }))));
     }
 }
 

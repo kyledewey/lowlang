@@ -9,7 +9,7 @@ public class Jal implements MIPSInstruction {
 
     public String toString() {
         return (MIPSInstruction.INDENT + "jal " +
-                jumpTo.toString());
+                jumpTo.getName());
     }
 
     public boolean equals(final Object other) {
