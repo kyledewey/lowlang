@@ -15,49 +15,10 @@ import org.junit.Test;
 import org.junit.Rule;
 import org.junit.rules.TestName;
 
-public class MIPSCodeGeneratorTest {
-    @Rule public TestName name = new TestName();
-
-    public int parseOutput(final String[] spimOutput) {
-        assert(spimOutput.length == 2);
-        return Integer.parseInt(spimOutput[1]);
-    } // parseOutput
-
-    public void assertResult(final int expected, final Exp exp) throws IOException {
-        assertResult(expected, exp, new HashMap<StructureName, LinkedHashMap<FieldName, Type>>());
+public class MIPSCodeGeneratorTest extends MIPSCodeGeneratorTestBase<Exp> {
+    protected void doCompile(final MIPSCodeGenerator gen, final Exp exp) {
+        gen.compilePrintStmt(new PrintStmt(exp));
     }
-    
-    public void assertResult(final int expected,
-                             final Exp exp,
-                             final Map<StructureName, LinkedHashMap<FieldName, Type>> structDecs) throws IOException {
-        boolean wantToSaveFile = true; // for debugging
-
-        final File file = File.createTempFile(name.getMethodName(),
-                                              ".asm",
-                                              new File("testPrograms"));
-        boolean testPassed = false;
-        try {
-            final MIPSCodeGenerator gen = new MIPSCodeGenerator(structDecs,
-                                                                new HashMap<FunctionName, FunctionDefinition>());
-            gen.compileExpression(exp);
-            gen.writeCompleteFile(file, true);
-            final String[] output = SPIMRunner.runFile(file);
-            final int received = parseOutput(output);
-            if (wantToSaveFile) {
-                assertEquals("Expected: " + expected + " Received: " + received + " File: " +
-                             file.getAbsolutePath(),
-                             expected,
-                             received);
-            } else {
-                assertEquals(expected, received);
-            }
-            testPassed = true;
-        } finally {
-            if (!wantToSaveFile || testPassed) {
-                file.delete();
-            }
-        }
-    } // assertResult
 
     @Test
     public void testIntLiteral() throws IOException {

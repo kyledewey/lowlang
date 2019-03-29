@@ -15,7 +15,7 @@ import org.junit.Test;
 import org.junit.Rule;
 import org.junit.rules.TestName;
 
-public class MIPSCodeGeneratorStatementTest {
+public class MIPSCodeGeneratorStatementTest extends MIPSCodeGeneratorTestBase<Stmt> {
     final Map<StructureName, LinkedHashMap<FieldName, Type>> TWO_INTS =
         new HashMap<StructureName, LinkedHashMap<FieldName, Type>>() {{
             put(new StructureName("TwoInts"), new LinkedHashMap<FieldName, Type>() {{
@@ -34,53 +34,13 @@ public class MIPSCodeGeneratorStatementTest {
             }});
         }};
 
-    @Rule public TestName name = new TestName();
-    
-    // TODO: code duplication with MIPSCodeGeneratorTest
-    public int parseOutput(final String[] spimOutput) {
-        assert(spimOutput.length == 2);
-        return Integer.parseInt(spimOutput[1]);
-    } // parseOutput
-
-    public void assertResult(final int expected, final Stmt stmt) throws IOException {
-        assertResult(expected, stmt, new HashMap<StructureName, LinkedHashMap<FieldName, Type>>());
+    protected void doCompile(final MIPSCodeGenerator gen, final Stmt stmt) {
+        gen.compileStatement(stmt);
     }
-        
-    public void assertResult(final int expected,
-                             final Stmt stmt,
-                             final Map<StructureName, LinkedHashMap<FieldName, Type>> structDecs) throws IOException {
-        boolean wantToSaveFile = true; // for debugging
 
-        final File file = File.createTempFile(name.getMethodName(),
-                                              ".asm",
-                                              new File("testPrograms"));
-        boolean testPassed = false;
-        try {
-            final MIPSCodeGenerator gen = new MIPSCodeGenerator(structDecs,
-                                                                new HashMap<FunctionName, FunctionDefinition>());
-            gen.compileStatement(stmt);
-            gen.writeCompleteFile(file, false);
-            final String[] output = SPIMRunner.runFile(file);
-            final int received = parseOutput(output);
-            if (wantToSaveFile) {
-                assertEquals("Expected: " + expected + " Received: " + received + " File: " +
-                             file.getAbsolutePath(),
-                             expected,
-                             received);
-            } else {
-                assertEquals(expected, received);
-            }
-            testPassed = true;
-        } finally {
-            if (!wantToSaveFile || testPassed) {
-                file.delete();
-            }
-        }
-    } // assertResult
-
-    public VariableDeclarationInitializationStmt vardec(final String variableName,
-                                                        final Type type,
-                                                        final Exp exp) {
+    public static VariableDeclarationInitializationStmt vardec(final String variableName,
+                                                               final Type type,
+                                                               final Exp exp) {
         return new VariableDeclarationInitializationStmt(new VariableDeclaration(type,
                                                                                  new Variable(variableName)),
                                                          exp);

@@ -234,7 +234,6 @@ public class MIPSCodeGenerator {
     public void compilePrintStmt(final PrintStmt stmt) {
         compileExpression(stmt.exp);
         resetExpressionOffset();
-        
         pop(MIPSRegister.A0);
         printA0();
     }
@@ -572,22 +571,16 @@ public class MIPSCodeGenerator {
         return entries.toArray(new MIPSInstruction[entries.size()]);
     } // getInstructions
 
-    private void mainEnd(final boolean printTopOfStack) {
-        if (printTopOfStack) {
-            pop(MIPSRegister.A0);
-            printA0();
-        }
-        
+    private void mainEnd() {
         // exit
         add(new Li(MIPSRegister.V0, 10));
         add(new Syscall());
     } // mainEnd
     
-    public void writeCompleteFile(final File file,
-                                  final boolean printTopOfStack) throws IOException {
+    public void writeCompleteFile(final File file) throws IOException {
         final PrintWriter output =
             new PrintWriter(new BufferedWriter(new FileWriter(file)));
-        mainEnd(printTopOfStack);
+        mainEnd();
         try {
             output.println(".data");
             output.println("newline:");
