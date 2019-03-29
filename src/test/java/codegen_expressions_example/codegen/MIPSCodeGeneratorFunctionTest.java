@@ -236,5 +236,39 @@ public class MIPSCodeGeneratorFunctionTest extends MIPSCodeGeneratorTestBase<Fun
                                                                                     }))),
                       mkMain(new PrintStmt(access)));
     }
+
+    @Test
+    public void testCanTakeStructureGetFirst() throws IOException {
+        // void foo(TwoInts s) {
+        //   print(s.x);
+        // }
+        // void main() {
+        //   foo(TwoInts(1, 2));
+        // }
+
+        final FunctionName foo = new FunctionName("foo");
+        final StructureName twoInts = new StructureName("TwoInts");
+        final Variable s = new Variable("s");
+        final FieldAccessExp access = new FieldAccessExp(new VariableExp(s),
+                                                         new FieldName("x"));
+        access.setExpStructure(twoInts);
+
+        assertResultF(1,
+                      MIPSCodeGeneratorStatementTest.TWO_INTS,
+                      new FunctionDefinition(new VoidType(),
+                                             foo,
+                                             new VariableDeclaration[] {
+                                                 new VariableDeclaration(new StructureType(twoInts), s)
+                                             },
+                                             new PrintStmt(access)),
+                      mkMain(new FunctionCallStmt(foo,
+                                                  new Exp[] {
+                                                      new MakeStructureExp(twoInts,
+                                                                           new Exp[] {
+                                                                               new IntExp(1),
+                                                                               new IntExp(2)
+                                                                           })
+                                                  })));
+    }
 }
 

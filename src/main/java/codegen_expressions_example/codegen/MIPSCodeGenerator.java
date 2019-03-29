@@ -56,7 +56,8 @@ public class MIPSCodeGenerator {
     public static boolean containsReturn(final Stmt stmt) {
         if (stmt instanceof VariableDeclarationInitializationStmt ||
             stmt instanceof AssignmentStmt ||
-            stmt instanceof PrintStmt) {
+            stmt instanceof PrintStmt ||
+            stmt instanceof FunctionCallStmt) {
             return false;
         } else if (stmt instanceof SequenceStmt) {
             final SequenceStmt asSeq = (SequenceStmt)stmt;
@@ -285,6 +286,8 @@ public class MIPSCodeGenerator {
             compileReturnExpStmt((ReturnExpStmt)stmt);
         } else if (stmt instanceof ReturnVoidStmt) {
             compileReturnVoidStmt((ReturnVoidStmt)stmt);
+        } else if (stmt instanceof FunctionCallStmt) {
+            compileFunctionCallStmt((FunctionCallStmt)stmt);
         } else {
             assert(false);
         }
@@ -560,6 +563,17 @@ public class MIPSCodeGenerator {
         expressionOffset = originalExpressionOffset + returnTypeSize;
     }
 
+    public void compileFunctionCallStmt(final FunctionCallStmt stmt) {
+        final FunctionCallExp exp = stmt.asExp;
+        final int returnTypeSize = sizeof(functionDefs.get(exp.name).returnType);
+        compileFunctionCallExp(exp);
+        // ignore what's on the stack
+        final MIPSRegister sp = MIPSRegister.SP;
+        add(new Addi(sp, sp, returnTypeSize));
+        expressionOffset -= returnTypeSize;
+        assert(expressionOffset >= 0);
+    }
+    
     public void compileExpression(final Exp exp) {
         if (exp instanceof IntExp) {
             compileIntExp((IntExp)exp);
