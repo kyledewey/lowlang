@@ -132,5 +132,109 @@ public class MIPSCodeGeneratorFunctionTest extends MIPSCodeGeneratorTestBase<Fun
                                                                                     }))),
                       mkMain(new PrintStmt(access)));
     }
+
+    @Test
+    public void testReturnStructureConstantGetSecond() throws IOException {
+        // TwoInts foo() {
+        //   return TwoInts(1, 2);
+        // }
+        // void main() {
+        //   print(foo().y);
+        // }
+
+        final FunctionName foo = new FunctionName("foo");
+        final StructureName twoInts = new StructureName("TwoInts");
+        final FieldAccessExp access = new FieldAccessExp(new FunctionCallExp(foo, new Exp[0]),
+                                                         new FieldName("y"));
+        access.setExpStructure(twoInts);
+        
+        assertResultF(2,
+                      MIPSCodeGeneratorStatementTest.TWO_INTS,
+                      new FunctionDefinition(new StructureType(twoInts),
+                                             foo,
+                                             new VariableDeclaration[0],
+                                             new ReturnExpStmt(new MakeStructureExp(twoInts,
+                                                                                    new Exp[] {
+                                                                                        new IntExp(1),
+                                                                                        new IntExp(2)
+                                                                                    }))),
+                      mkMain(new PrintStmt(access)));
+    }
+
+    @Test
+    public void testReturnStructureParamsGetFirst() throws IOException {
+        // TwoInts foo(int a, int b) {
+        //   return TwoInts(a, b);
+        // }
+        // void main() {
+        //   print(foo(1, 2).x);
+        // }
+
+        final FunctionName foo = new FunctionName("foo");
+        final StructureName twoInts = new StructureName("TwoInts");
+        final FieldAccessExp access = new FieldAccessExp(new FunctionCallExp(foo,
+                                                                             new Exp[] {
+                                                                                 new IntExp(1),
+                                                                                 new IntExp(2)
+                                                                             }),
+                                                         new FieldName("x"));
+        access.setExpStructure(twoInts);
+
+        final Variable a = new Variable("a");
+        final Variable b = new Variable("b");
+        
+        assertResultF(1,
+                      MIPSCodeGeneratorStatementTest.TWO_INTS,
+                      new FunctionDefinition(new StructureType(twoInts),
+                                             foo,
+                                             new VariableDeclaration[] {
+                                                 new VariableDeclaration(new IntType(), a),
+                                                 new VariableDeclaration(new IntType(), b)
+                                             },
+                                             new ReturnExpStmt(new MakeStructureExp(twoInts,
+                                                                                    new Exp[] {
+                                                                                        new VariableExp(a),
+                                                                                        new VariableExp(b)
+                                                                                    }))),
+                      mkMain(new PrintStmt(access)));
+    }
+
+    @Test
+    public void testReturnStructureParamsGetSecond() throws IOException {
+        // TwoInts foo(int a, int b) {
+        //   return TwoInts(a, b);
+        // }
+        // void main() {
+        //   print(foo(1, 2).y);
+        // }
+
+        final FunctionName foo = new FunctionName("foo");
+        final StructureName twoInts = new StructureName("TwoInts");
+        final FieldAccessExp access = new FieldAccessExp(new FunctionCallExp(foo,
+                                                                             new Exp[] {
+                                                                                 new IntExp(1),
+                                                                                 new IntExp(2)
+                                                                             }),
+                                                         new FieldName("y"));
+        access.setExpStructure(twoInts);
+
+        final Variable a = new Variable("a");
+        final Variable b = new Variable("b");
+        
+        assertResultF(2,
+                      MIPSCodeGeneratorStatementTest.TWO_INTS,
+                      new FunctionDefinition(new StructureType(twoInts),
+                                             foo,
+                                             new VariableDeclaration[] {
+                                                 new VariableDeclaration(new IntType(), a),
+                                                 new VariableDeclaration(new IntType(), b)
+                                             },
+                                             new ReturnExpStmt(new MakeStructureExp(twoInts,
+                                                                                    new Exp[] {
+                                                                                        new VariableExp(a),
+                                                                                        new VariableExp(b)
+                                                                                    }))),
+                      mkMain(new PrintStmt(access)));
+    }
 }
 
