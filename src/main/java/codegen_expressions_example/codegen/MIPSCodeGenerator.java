@@ -143,12 +143,10 @@ public class MIPSCodeGenerator {
         
         add(functionNameToLabel(def.name));
         
-        final VariableDeclaration[] params = def.parameters;
-        for (int index = params.length - 1; index >= 0; index--) {
-            final VariableDeclaration current = params[index];
-            variables.pushVariable(current.variable,
-                                   current.type,
-                                   sizeof(current.type));
+        for (final VariableDeclaration param : def.parameters) {
+            variables.pushVariable(param.variable,
+                                   param.type,
+                                   sizeof(param.type));
         }
 
         // return address always follows parameters
