@@ -586,7 +586,7 @@ public class MIPSCodeGeneratorStatementTest extends MIPSCodeGeneratorTestBase<St
 
         final DereferenceExp deref =
             new DereferenceExp(new VariableExp(new Variable("p")));
-        deref.setExpType(new PointerType(new IntType()));
+        deref.setTypeAfterDereference(new IntType());
 
         assertResult(5,
                      stmts(vardec("x",
@@ -604,11 +604,11 @@ public class MIPSCodeGeneratorStatementTest extends MIPSCodeGeneratorTestBase<St
         // p = &x;
         // print((*p).y);
 
+        final StructureName twoInts = new StructureName("TwoInts");
         final DereferenceExp derefExp =
             new DereferenceExp(new VariableExp(new Variable("p")));
-        derefExp.setExpType(new PointerType(new IntType()));
+        derefExp.setTypeAfterDereference(new StructureType(twoInts));
 
-        final StructureName twoInts = new StructureName("TwoInts");
         final FieldAccessExp accessExp =
             new FieldAccessExp(derefExp, new FieldName("y"));
         accessExp.setExpStructure(twoInts);

@@ -131,7 +131,7 @@ public class MIPSCodeGeneratorTest extends MIPSCodeGeneratorTestBase<Exp> {
         // TODO: this is very bad; assumes initial value of allocated memory
         final DereferenceExp exp =
             new DereferenceExp(new MallocExp(new IntExp(4)));
-        exp.setExpType(new PointerType(new IntType()));
+        exp.setTypeAfterDereference(new IntType());
         assertResult(0, exp);
     }
 

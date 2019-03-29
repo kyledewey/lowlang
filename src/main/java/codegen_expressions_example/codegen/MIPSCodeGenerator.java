@@ -134,15 +134,14 @@ public class MIPSCodeGenerator {
                                4);
         resetExpressionOffset();
         compileStatement(def.body);
+        assert(expressionOffset == 0);
 
         // return will handle putting the return value on the stack
         // return is not always requires, so see if we need to put one here
         if (!containsReturn(def.body)) {
-            assert(expressionOffset == 0);
             doReturn();
         }
         variables.clear();
-        resetExpressionOffset();
     }
     
     public void compileVariableDeclarationInitializationStmt(final VariableDeclarationInitializationStmt stmt) {
@@ -233,7 +232,7 @@ public class MIPSCodeGenerator {
     
     public void compilePrintStmt(final PrintStmt stmt) {
         compileExpression(stmt.exp);
-        resetExpressionOffset();
+        assert(expressionOffset == 4);
         pop(MIPSRegister.A0);
         printA0();
     }
@@ -366,8 +365,8 @@ public class MIPSCodeGenerator {
         // on the stack.  Additionally, we need to know what the type of the
         // expression is (thanks typechecker!), which will tell us how much
         // to load in
-        final int loadSize = sizeof(exp.getExpType());
-        
+        final int loadSize = sizeof(exp.getTypeAfterDereference());
+
         // memory address is on top of stack
         compileExpression(exp.exp);
 
@@ -375,7 +374,7 @@ public class MIPSCodeGenerator {
         final MIPSRegister t0 = MIPSRegister.T0;
         pop(t0);
 
-        // allocate space on the stack for everything
+        // Allocate space on the stack for everything.
         final MIPSRegister sp = MIPSRegister.SP;        
         add(new Addi(sp, sp, -loadSize));
 
