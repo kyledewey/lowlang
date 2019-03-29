@@ -106,10 +106,14 @@ public class MIPSCodeGenerator {
         final int sizeOfAllVariables = variables.totalSizeOfAllVariables();
         final int copyReturnValueToOffset =
             sizeOfAllVariables + expressionOffset;
-        for (int base = 0; base < expressionOffset; base += 4) {
+        int copyFrom = expressionOffset - 4;
+        int copyTo = copyReturnValueToOffset - 4;
+        while (copyFrom >= 0) {
             final MIPSRegister t0 = MIPSRegister.T0;
-            add(new Lw(t0, base, sp));
-            add(new Sw(t0, copyReturnValueToOffset + base - 4, sp));
+            add(new Lw(t0, copyFrom, sp));
+            add(new Sw(t0, copyTo, sp));
+            copyFrom -= 4;
+            copyTo -= 4;
         }
 
         // Put sp at final position
