@@ -210,11 +210,23 @@ public class MIPSCodeGenerator {
         final MIPSLabel falseStart = freshIfLabel("false_start");
         final MIPSLabel falseEnd = freshIfLabel("false_end");
         add(new Beq(t0, MIPSRegister.ZERO, falseStart));
-        compileStatement(stmt.ifTrue);
+
+        compileStatementInNestedScope(stmt.ifTrue);
         add(new J(falseEnd));
         add(falseStart);
-        compileStatement(stmt.ifFalse);
+        compileStatementInNestedScope(stmt.ifFalse);
         add(falseEnd);
+    }
+
+    private void compileStatementInNestedScope(final Stmt stmt) {
+        final VariableTableResetPoint reset = variables.makeResetPoint();
+        compileStatement(stmt);
+        final int sizeFreed = variables.resetTo(reset);
+        assert(sizeFreed >= 0);
+        if (sizeFreed > 0) {
+            final MIPSRegister sp = MIPSRegister.SP;
+            add(new Addi(sp, sp, sizeFreed));
+        }
     }
     
     public void compileVariableDeclarationInitializationStmt(final VariableDeclarationInitializationStmt stmt) {
@@ -341,7 +353,7 @@ public class MIPSCodeGenerator {
         // If the guard is false, go to the end.  Otherwise, fall
         // through to body.
         add(new Beq(t0, MIPSRegister.ZERO, currentWhileEnd));
-        compileStatement(stmt.body);
+        compileStatementInNestedScope(stmt.body);
         add(new J(currentWhileStart));
         add(currentWhileEnd);
 

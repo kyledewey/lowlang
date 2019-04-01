@@ -12,21 +12,30 @@ public class VariableTable {
         variables = new LinkedList<VariableEntry>();
     }
 
-    // returns a point where we were before the push
-    public int pushVariable(final Variable variable,
-                            final Type type,
-                            final int size) {
-        final int resetPoint = variables.size();
+    public void pushVariable(final Variable variable,
+                             final Type type,
+                             final int size) {
         variables.push(new VariableEntry(variable, type, size));
-        return resetPoint;
     }
 
-    public void resetTo(final int resetPoint) {
-        final int size = variables.size();
-        assert(resetPoint <= size);
-        for (int cur = size; cur > resetPoint; cur--) {
-            variables.pop();
+    public VariableTableResetPoint makeResetPoint() {
+        return new VariableTableResetPoint(variables.size());
+    }
+
+    // returns the amount of space freed on the stack
+    public int resetTo(final VariableTableResetPoint resetPoint) {
+        int size = variables.size();
+        final int targetSize = resetPoint.resetTo;
+        assert(targetSize <= size);
+        int sizeFreed = 0;
+
+        while (size != targetSize) {
+            final VariableEntry entry = variables.pop();
+            sizeFreed += entry.size;
+            size--;
         }
+
+        return sizeFreed;
     }
 
     // gets starting position in memory
