@@ -777,4 +777,58 @@ public class MIPSCodeGeneratorStatementTest extends MIPSCodeGeneratorTestBase<St
                            NESTED_IF));
     }
     // ---END CODE FOR NESTED IF TESTS---
+
+    @Test
+    public void testIfComplexGuardTrue() throws IOException {
+        // if (0 < TwoInts(1, 2).x) {
+        //   print(1);
+        // } else {
+        //   print(2);
+        // }
+
+        final StructureName twoInts = new StructureName("TwoInts");
+        final FieldAccessExp access = new FieldAccessExp(new MakeStructureExp(twoInts,
+                                                                              new Exp[] {
+                                                                                  new IntExp(1),
+                                                                                  new IntExp(2)
+                                                                              }),
+                                                         new FieldName("x"));
+        access.setExpStructure(twoInts);
+        
+        final Exp guard = new BinopExp(new IntExp(0),
+                                       new LessThanOp(),
+                                       access);
+        assertResult(1,
+                     new IfStmt(guard,
+                                new PrintStmt(new IntExp(1)),
+                                new PrintStmt(new IntExp(2))),
+                     TWO_INTS);
+    }
+
+    @Test
+    public void testIfComplexGuardFalse() throws IOException {
+        // if (TwoInts(1, 2).x < 0) {
+        //   print(1);
+        // } else {
+        //   print(2);
+        // }
+
+        final StructureName twoInts = new StructureName("TwoInts");
+        final FieldAccessExp access = new FieldAccessExp(new MakeStructureExp(twoInts,
+                                                                              new Exp[] {
+                                                                                  new IntExp(1),
+                                                                                  new IntExp(2)
+                                                                              }),
+                                                         new FieldName("x"));
+        access.setExpStructure(twoInts);
+        
+        final Exp guard = new BinopExp(access,
+                                       new LessThanOp(),
+                                       new IntExp(0));
+        assertResult(2,
+                     new IfStmt(guard,
+                                new PrintStmt(new IntExp(1)),
+                                new PrintStmt(new IntExp(2))),
+                     TWO_INTS);
+    }
 }
