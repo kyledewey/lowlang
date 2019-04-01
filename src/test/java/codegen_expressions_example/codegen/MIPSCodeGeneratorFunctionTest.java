@@ -270,5 +270,94 @@ public class MIPSCodeGeneratorFunctionTest extends MIPSCodeGeneratorTestBase<Fun
                                                                            })
                                                   })));
     }
+
+    @Test
+    public void testCanTakeStructureGetSecond() throws IOException {
+        // void foo(TwoInts s) {
+        //   print(s.y);
+        // }
+        // void main() {
+        //   foo(TwoInts(1, 2));
+        // }
+
+        final FunctionName foo = new FunctionName("foo");
+        final StructureName twoInts = new StructureName("TwoInts");
+        final Variable s = new Variable("s");
+        final FieldAccessExp access = new FieldAccessExp(new VariableExp(s),
+                                                         new FieldName("y"));
+        access.setExpStructure(twoInts);
+
+        assertResultF(2,
+                      MIPSCodeGeneratorStatementTest.TWO_INTS,
+                      new FunctionDefinition(new VoidType(),
+                                             foo,
+                                             new VariableDeclaration[] {
+                                                 new VariableDeclaration(new StructureType(twoInts), s)
+                                             },
+                                             new PrintStmt(access)),
+                      mkMain(new FunctionCallStmt(foo,
+                                                  new Exp[] {
+                                                      new MakeStructureExp(twoInts,
+                                                                           new Exp[] {
+                                                                               new IntExp(1),
+                                                                               new IntExp(2)
+                                                                           })
+                                                  })));
+    }
+
+    @Test
+    public void testCanTakeMultipleStructures() throws IOException {
+        // FourInts foo(TwoInts x, TwoInts y) {
+        //   return FourInts(x, y);
+        // }
+        // void main() {
+        //   FourInts f = foo(TwoInts(1, 2), TwoInts(3, 4));
+        //   print(f.second.x);
+        // }
+
+        final FunctionName foo = new FunctionName("foo");
+        final StructureName twoInts = new StructureName("TwoInts");
+        final StructureName fourInts = new StructureName("FourInts");
+        final Variable x = new Variable("x");
+        final Variable y = new Variable("y");
+        final Variable f = new Variable("f");
+
+        final FieldAccessExp accessSecond = new FieldAccessExp(new VariableExp(f),
+                                                               new FieldName("second"));
+        accessSecond.setExpStructure(fourInts);
+        final FieldAccessExp accessX = new FieldAccessExp(accessSecond,
+                                                          new FieldName("x"));
+        accessX.setExpStructure(twoInts);
+        
+        assertResultF(3,
+                      MIPSCodeGeneratorStatementTest.DOUBLE_TWO_INTS,
+                      new FunctionDefinition(new StructureType(fourInts),
+                                             foo,
+                                             new VariableDeclaration[] {
+                                                 new VariableDeclaration(new StructureType(twoInts), x),
+                                                 new VariableDeclaration(new StructureType(twoInts), y)
+                                             },
+                                             new ReturnExpStmt(new MakeStructureExp(fourInts,
+                                                                                    new Exp[] {
+                                                                                        new VariableExp(x),
+                                                                                        new VariableExp(y)
+                                                                                    }))),
+                      mkMain(stmts(vardec("f",
+                                          new StructureType(fourInts),
+                                          new FunctionCallExp(foo,
+                                                              new Exp[] {
+                                                                  new MakeStructureExp(twoInts,
+                                                                                       new Exp[] {
+                                                                                           new IntExp(1),
+                                                                                           new IntExp(2)
+                                                                                       }),
+                                                                  new MakeStructureExp(twoInts,
+                                                                                       new Exp[] {
+                                                                                           new IntExp(3),
+                                                                                           new IntExp(4)
+                                                                                       })
+                                                              })),
+                                   new PrintStmt(accessX))));
+    }
 }
 
