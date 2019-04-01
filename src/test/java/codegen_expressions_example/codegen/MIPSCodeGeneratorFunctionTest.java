@@ -359,5 +359,56 @@ public class MIPSCodeGeneratorFunctionTest extends MIPSCodeGeneratorTestBase<Fun
                                                               })),
                                    new PrintStmt(accessX))));
     }
+
+    @Test
+    public void testFibonacci() throws IOException {
+        // int fib(int x) {
+        //   if (x == 0) {
+        //     return 0;
+        //   } else if (x == 1) {
+        //     return 1;
+        //   } else {
+        //     return fib(x - 1) + fib(x - 2);
+        //   }
+        // }
+        // void main() {
+        //   print(fib(7));
+        // }
+
+        final FunctionName fib = new FunctionName("fib");
+        final Variable x = new Variable("x");
+        final Exp recursiveCase = new BinopExp(new FunctionCallExp(fib,
+                                                                   new Exp[] {
+                                                                       new BinopExp(new VariableExp(x),
+                                                                                    new MinusOp(),
+                                                                                    new IntExp(1))
+                                                                   }),
+                                               new PlusOp(),
+                                               new FunctionCallExp(fib,
+                                                                   new Exp[] {
+                                                                       new BinopExp(new VariableExp(x),
+                                                                                    new MinusOp(),
+                                                                                    new IntExp(2))
+                                                                   }));
+        assertResultF(13,
+                      new FunctionDefinition(new IntType(),
+                                             fib,
+                                             new VariableDeclaration[] {
+                                                 new VariableDeclaration(new IntType(), x)
+                                             },
+                                             new IfStmt(new BinopExp(new VariableExp(x),
+                                                                     new EqualsOp(),
+                                                                     new IntExp(0)),
+                                                        new ReturnExpStmt(new IntExp(0)),
+                                                        new IfStmt(new BinopExp(new VariableExp(x),
+                                                                                new EqualsOp(),
+                                                                                new IntExp(1)),
+                                                                   new ReturnExpStmt(new IntExp(1)),
+                                                                   new ReturnExpStmt(recursiveCase)))),
+                      mkMain(new PrintStmt(new FunctionCallExp(fib,
+                                                               new Exp[] {
+                                                                   new IntExp(7)
+                                                               }))));
+    }
 }
 

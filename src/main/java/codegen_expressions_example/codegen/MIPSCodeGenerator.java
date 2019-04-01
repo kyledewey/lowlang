@@ -67,7 +67,9 @@ public class MIPSCodeGenerator {
         if (stmt instanceof VariableDeclarationInitializationStmt ||
             stmt instanceof AssignmentStmt ||
             stmt instanceof PrintStmt ||
-            stmt instanceof FunctionCallStmt) {
+            stmt instanceof FunctionCallStmt ||
+            stmt instanceof BreakStmt ||
+            stmt instanceof ContinueStmt) {
             return false;
         } else if (stmt instanceof SequenceStmt) {
             final SequenceStmt asSeq = (SequenceStmt)stmt;
@@ -75,6 +77,11 @@ public class MIPSCodeGenerator {
         } else if (stmt instanceof ReturnVoidStmt ||
                    stmt instanceof ReturnExpStmt) {
             return true;
+        } else if (stmt instanceof IfStmt) {
+            final IfStmt asIf = (IfStmt)stmt;
+            return containsReturn(asIf.ifTrue) || containsReturn(asIf.ifFalse);
+        } else if (stmt instanceof WhileStmt) {
+            return containsReturn(((WhileStmt)stmt).body);
         } else {
             assert(false);
             return false;
