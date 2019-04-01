@@ -985,4 +985,46 @@ public class MIPSCodeGeneratorStatementTest extends MIPSCodeGeneratorTestBase<St
                                                new BreakStmt())),
                            printVar("x")));
     }
+
+    @Test
+    public void testNestedWhile() throws IOException {
+        // int result = 0;
+        // int x = 0;
+        // while (x < 5) {
+        //   int y = 0;
+        //   while (y < 5) {
+        //     result = result + 1;
+        //     y = y + 1;
+        //   }
+        //   x = x + 1;
+        // }
+        // print(result);
+
+        final Variable result = new Variable("result");
+        final Variable x = new Variable("x");
+        final Variable y = new Variable("y");
+
+        assertResult(25,
+                     stmts(vardec("result", new IntType(), new IntExp(0)),
+                           vardec("x", new IntType(), new IntExp(0)),
+                           new WhileStmt(new BinopExp(new VariableExp(x),
+                                                      new LessThanOp(),
+                                                      new IntExp(5)),
+                                         stmts(vardec("y", new IntType(), new IntExp(0)),
+                                               new WhileStmt(new BinopExp(new VariableExp(y),
+                                                                          new LessThanOp(),
+                                                                          new IntExp(5)),
+                                                             stmts(assign("result",
+                                                                          new BinopExp(new VariableExp(result),
+                                                                                       new PlusOp(),
+                                                                                       new IntExp(1))),
+                                                                   assign("y",
+                                                                          new BinopExp(new VariableExp(y),
+                                                                                       new PlusOp(),
+                                                                                       new IntExp(1))))),
+                                               assign("x", new BinopExp(new VariableExp(x),
+                                                                        new PlusOp(),
+                                                                        new IntExp(1))))),
+                           printVar("result")));
+    }
 }
