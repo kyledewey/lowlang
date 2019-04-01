@@ -950,4 +950,39 @@ public class MIPSCodeGeneratorStatementTest extends MIPSCodeGeneratorTestBase<St
                                                           new ContinueStmt()))),
                            printVar("x")));
     }
+
+    @Test
+    public void testIfScope() throws IOException {
+        // int x = 0;
+        // if (true) {
+        //   int x = 1;
+        // } else {
+        //   int x = 2;
+        // }
+        // print(x);
+
+        assertResult(0,
+                     stmts(vardec("x", new IntType(), new IntExp(0)),
+                           new IfStmt(new BoolExp(true),
+                                      vardec("x", new IntType(), new IntExp(1)),
+                                      vardec("x", new IntType(), new IntExp(2))),
+                           printVar("x")));
+    }
+
+    @Test
+    public void testWhileScope() throws IOException {
+        // int x = 0;
+        // while (true) {
+        //   int x = 1;
+        //   break;
+        // }
+        // print(x);
+
+        assertResult(0,
+                     stmts(vardec("x", new IntType(), new IntExp(0)),
+                           new WhileStmt(new BoolExp(true),
+                                         stmts(vardec("x", new IntType(), new IntExp(1)),
+                                               new BreakStmt())),
+                           printVar("x")));
+    }
 }
