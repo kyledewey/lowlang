@@ -831,4 +831,44 @@ public class MIPSCodeGeneratorStatementTest extends MIPSCodeGeneratorTestBase<St
                                 new PrintStmt(new IntExp(2))),
                      TWO_INTS);
     }
+
+    @Test
+    public void testWhileInitiallyFalse() throws IOException {
+        // int x = 0;
+        // while (x < 0) {
+        //   x = x + 1;
+        // }
+        // print(x);
+
+        final Variable x = new Variable("x");
+        assertResult(0,
+                     stmts(vardec("x", new IntType(), new IntExp(0)),
+                           new WhileStmt(new BinopExp(new VariableExp(x),
+                                                      new LessThanOp(),
+                                                      new IntExp(0)),
+                                         assign("x", new BinopExp(new VariableExp(x),
+                                                                  new PlusOp(),
+                                                                  new IntExp(1)))),
+                           printVar("x")));
+    }
+
+    @Test
+    public void testWhileInitiallyTrue() throws IOException {
+        // int x = 0;
+        // while (x < 10) {
+        //   x = x + 1;
+        // }
+        // print(x);
+
+        final Variable x = new Variable("x");
+        assertResult(10,
+                     stmts(vardec("x", new IntType(), new IntExp(0)),
+                           new WhileStmt(new BinopExp(new VariableExp(x),
+                                                      new LessThanOp(),
+                                                      new IntExp(10)),
+                                         assign("x", new BinopExp(new VariableExp(x),
+                                                                  new PlusOp(),
+                                                                  new IntExp(1)))),
+                           printVar("x")));
+    }
 }

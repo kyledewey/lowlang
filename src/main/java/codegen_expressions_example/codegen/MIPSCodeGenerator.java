@@ -36,6 +36,9 @@ public class MIPSCodeGenerator {
     private FunctionName currentFunction;
     private int expressionOffset;
     private int ifCounter;
+    private int whileCounter;
+    private MIPSLabel currentWhileStart;
+    private MIPSLabel currentWhileEnd;
     // ---END INSTANCE VARIABLES
     
     public MIPSCodeGenerator(final Map<StructureName, LinkedHashMap<FieldName, Type>> structDecs,
@@ -47,6 +50,9 @@ public class MIPSCodeGenerator {
         expressionOffset = 0;
         currentFunction = null;
         ifCounter = 0;
+        whileCounter = 0;
+        currentWhileStart = null;
+        currentWhileEnd = null;
     }
 
     // specifically used in statement contexts, when a statement finishes evaluating an
@@ -179,6 +185,10 @@ public class MIPSCodeGenerator {
         return new MIPSLabel(currentFunction.name + "_if_" + baseName, ifCounter++);
     }
 
+    private MIPSLabel freshWhileLabel(final String baseName) {
+        return new MIPSLabel(currentFunction.name + "_while_" + baseName, whileCounter++);
+    }
+    
     public void compileIfStmt(final IfStmt stmt) {
         compileExpression(stmt.guard);
 
@@ -304,6 +314,46 @@ public class MIPSCodeGenerator {
         doReturn();
         assert(expressionOffset == 0);
     }
+
+    public void compileWhileStmt(final WhileStmt stmt) {
+        // save old start and end, as nested while is possible
+        final MIPSLabel oldWhileStart = currentWhileStart;
+        final MIPSLabel oldWhileEnd = currentWhileEnd;
+        currentWhileStart = freshWhileLabel("start");
+        currentWhileEnd = freshWhileLabel("end");
+
+        add(currentWhileStart);
+        compileExpression(stmt.guard);
+
+        // Guaranteed that guard is a boolean, from the typechecker.
+        // Put it in t0.
+        assert(expressionOffset == 4);
+        final MIPSRegister t0 = MIPSRegister.T0;
+        pop(t0);
+
+        // If the guard is false, go to the end.  Otherwise, fall
+        // through to body.
+        add(new Beq(t0, MIPSRegister.ZERO, currentWhileEnd));
+        compileStatement(stmt.body);
+        add(new J(currentWhileStart));
+        add(currentWhileEnd);
+
+        // restore old start and end
+        currentWhileStart = oldWhileStart;
+        currentWhileEnd = oldWhileEnd;
+    }
+
+    public void compileBreakStmt(final BreakStmt stmt) {
+        assert(currentWhileStart != null);
+        assert(currentWhileEnd != null);
+        add(new J(currentWhileEnd));
+    }
+
+    public void compileContinueStmt(final ContinueStmt stmt) {
+        assert(currentWhileStart != null);
+        assert(currentWhileEnd != null);
+        add(new J(currentWhileStart));
+    }
     
     public void compileStatement(final Stmt stmt) {
         if (stmt instanceof VariableDeclarationInitializationStmt) {
@@ -322,6 +372,12 @@ public class MIPSCodeGenerator {
             compileFunctionCallStmt((FunctionCallStmt)stmt);
         } else if (stmt instanceof IfStmt) {
             compileIfStmt((IfStmt)stmt);
+        } else if (stmt instanceof WhileStmt) {
+            compileWhileStmt((WhileStmt)stmt);
+        } else if (stmt instanceof BreakStmt) {
+            compileBreakStmt((BreakStmt)stmt);
+        } else if (stmt instanceof ContinueStmt) {
+            compileContinueStmt((ContinueStmt)stmt);
         } else {
             assert(false);
         }
