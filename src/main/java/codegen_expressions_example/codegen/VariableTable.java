@@ -3,6 +3,7 @@ package codegen_expressions_example.codegen;
 import codegen_expressions_example.syntax.Variable;
 import codegen_expressions_example.syntax.Type;
 
+import java.util.Iterator;
 import java.util.LinkedList;
 
 public class VariableTable {
@@ -22,6 +23,24 @@ public class VariableTable {
         return new VariableTableResetPoint(variables.size());
     }
 
+    public int sizeAllocatedSinceResetPoint(final VariableTableResetPoint resetPoint) {
+        int size = variables.size();
+        final int targetSize = resetPoint.resetTo;
+        assert(targetSize <= size);
+        assert(targetSize >= 0);
+        int totalSize = 0;
+        final Iterator<VariableEntry> it = variables.iterator();
+
+        while (size > targetSize) {
+            final boolean hasNext = it.hasNext();
+            assert(hasNext);
+            totalSize += it.next().size;
+            size--;
+        }
+
+        return totalSize;
+    }
+    
     // returns the amount of space freed on the stack
     public int resetTo(final VariableTableResetPoint resetPoint) {
         int size = variables.size();

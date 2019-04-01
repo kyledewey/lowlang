@@ -39,6 +39,7 @@ public class MIPSCodeGenerator {
     private int whileCounter;
     private MIPSLabel currentWhileStart;
     private MIPSLabel currentWhileEnd;
+    private VariableTableResetPoint currentWhileReset;
     // ---END INSTANCE VARIABLES
     
     public MIPSCodeGenerator(final Map<StructureName, LinkedHashMap<FieldName, Type>> structDecs,
@@ -53,6 +54,7 @@ public class MIPSCodeGenerator {
         whileCounter = 0;
         currentWhileStart = null;
         currentWhileEnd = null;
+        currentWhileReset = null;
     }
 
     // specifically used in statement contexts, when a statement finishes evaluating an
@@ -211,21 +213,31 @@ public class MIPSCodeGenerator {
         final MIPSLabel falseEnd = freshIfLabel("false_end");
         add(new Beq(t0, MIPSRegister.ZERO, falseStart));
 
-        compileStatementInNestedScope(stmt.ifTrue);
+        compileStatementInNestedScope(false, stmt.ifTrue);
         add(new J(falseEnd));
         add(falseStart);
-        compileStatementInNestedScope(stmt.ifFalse);
+        compileStatementInNestedScope(false, stmt.ifFalse);
         add(falseEnd);
     }
 
-    private void compileStatementInNestedScope(final Stmt stmt) {
-        final VariableTableResetPoint reset = variables.makeResetPoint();
-        compileStatement(stmt);
-        final int sizeFreed = variables.resetTo(reset);
-        assert(sizeFreed >= 0);
-        if (sizeFreed > 0) {
+    private void freeSizeForVariables(final int size) {
+        assert(size >= 0);
+        if (size > 0) {
             final MIPSRegister sp = MIPSRegister.SP;
-            add(new Addi(sp, sp, sizeFreed));
+            add(new Addi(sp, sp, size));
+        }
+    }
+    
+    private void compileStatementInNestedScope(final boolean isWhile, final Stmt stmt) {
+        final VariableTableResetPoint oldWhileReset = currentWhileReset;
+        final VariableTableResetPoint reset = variables.makeResetPoint();
+        if (isWhile) {
+            currentWhileReset = reset;
+        }
+        compileStatement(stmt);
+        freeSizeForVariables(variables.resetTo(reset));
+        if (isWhile) {
+            currentWhileReset = oldWhileReset;
         }
     }
     
@@ -353,7 +365,8 @@ public class MIPSCodeGenerator {
         // If the guard is false, go to the end.  Otherwise, fall
         // through to body.
         add(new Beq(t0, MIPSRegister.ZERO, currentWhileEnd));
-        compileStatementInNestedScope(stmt.body);
+
+        compileStatementInNestedScope(true, stmt.body);
         add(new J(currentWhileStart));
         add(currentWhileEnd);
 
@@ -365,12 +378,16 @@ public class MIPSCodeGenerator {
     public void compileBreakStmt(final BreakStmt stmt) {
         assert(currentWhileStart != null);
         assert(currentWhileEnd != null);
+        assert(currentWhileReset != null);
+        freeSizeForVariables(variables.sizeAllocatedSinceResetPoint(currentWhileReset));
         add(new J(currentWhileEnd));
     }
 
     public void compileContinueStmt(final ContinueStmt stmt) {
         assert(currentWhileStart != null);
         assert(currentWhileEnd != null);
+        assert(currentWhileReset != null);
+        freeSizeForVariables(variables.sizeAllocatedSinceResetPoint(currentWhileReset));
         add(new J(currentWhileStart));
     }
     
