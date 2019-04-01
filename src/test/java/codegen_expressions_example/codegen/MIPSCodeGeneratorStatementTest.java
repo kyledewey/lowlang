@@ -871,4 +871,83 @@ public class MIPSCodeGeneratorStatementTest extends MIPSCodeGeneratorTestBase<St
                                                                   new IntExp(1)))),
                            printVar("x")));
     }
+
+    @Test
+    public void testUnconditionalBreak() throws IOException {
+        // int x = 0;
+        // while (x < 10) {
+        //   x = x + 1;
+        //   break;
+        // }
+        // print(x);
+
+        final Variable x = new Variable("x");
+        assertResult(1,
+                     stmts(vardec("x", new IntType(), new IntExp(0)),
+                           new WhileStmt(new BinopExp(new VariableExp(x),
+                                                      new LessThanOp(),
+                                                      new IntExp(10)),
+                                         stmts(assign("x", new BinopExp(new VariableExp(x),
+                                                                        new PlusOp(),
+                                                                        new IntExp(1))),
+                                               new BreakStmt())),
+                           printVar("x")));
+    }
+
+    @Test
+    public void testUnconditionalContinue() throws IOException {
+        // int x = 0;
+        // int y = 0;
+        // while (x < 10) {
+        //   x = x + 1;
+        //   continue;
+        //   y = y + 1;
+        // }
+        // print(y);
+
+        final Variable x = new Variable("x");
+        final Variable y = new Variable("y");
+        assertResult(0,
+                     stmts(vardec("x", new IntType(), new IntExp(0)),
+                           vardec("y", new IntType(), new IntExp(0)),
+                           new WhileStmt(new BinopExp(new VariableExp(x),
+                                                      new LessThanOp(),
+                                                      new IntExp(10)),
+                                         stmts(assign("x", new BinopExp(new VariableExp(x),
+                                                                        new PlusOp(),
+                                                                        new IntExp(1))),
+                                               new ContinueStmt(),
+                                               assign("y", new BinopExp(new VariableExp(y),
+                                                                        new PlusOp(),
+                                                                        new IntExp(1))))),
+                           printVar("y")));
+    }
+
+    @Test
+    public void testConditionalBreakContinue() throws IOException {
+        // int x = 0;
+        // while (true) {
+        //   x = x + 1;
+        //   if (10 < x) {
+        //     break;
+        //   } else {
+        //     continue;
+        //   }
+        // }
+        // print(x);
+
+        final Variable x = new Variable("x");
+        assertResult(11,
+                     stmts(vardec("x", new IntType(), new IntExp(0)),
+                           new WhileStmt(new BoolExp(true),
+                                         stmts(assign("x", new BinopExp(new VariableExp(x),
+                                                                        new PlusOp(),
+                                                                        new IntExp(1))),
+                                               new IfStmt(new BinopExp(new IntExp(10),
+                                                                       new LessThanOp(),
+                                                                       new VariableExp(x)),
+                                                          new BreakStmt(),
+                                                          new ContinueStmt()))),
+                           printVar("x")));
+    }
 }
