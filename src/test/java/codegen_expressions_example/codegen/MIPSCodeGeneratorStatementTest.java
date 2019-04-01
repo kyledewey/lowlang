@@ -37,6 +37,7 @@ public class MIPSCodeGeneratorStatementTest extends MIPSCodeGeneratorTestBase<St
     // ---END CONSTANTS---
     
     protected void doCompile(final MIPSCodeGenerator gen, final Stmt stmt) {
+        gen.setCurrentFunctionForTesting(new FunctionName("TEST"));
         gen.compileStatement(stmt);
     }
 
@@ -628,5 +629,33 @@ public class MIPSCodeGeneratorStatementTest extends MIPSCodeGeneratorTestBase<St
                                   new AddressOfExp(new VariableLhs(new Variable("x")))),
                            new PrintStmt(accessExp)),
                      TWO_INTS);
+    }
+
+    @Test
+    public void testIfTrue() throws IOException {
+        // if (true) {
+        //   print(1);
+        // } else {
+        //   print(2);
+        // }
+
+        assertResult(1,
+                     new IfStmt(new BoolExp(true),
+                                new PrintStmt(new IntExp(1)),
+                                new PrintStmt(new IntExp(2))));
+    }
+
+    @Test
+    public void testIfFalse() throws IOException {
+        // if (false) {
+        //   print(1);
+        // } else {
+        //   print(2);
+        // }
+
+        assertResult(2,
+                     new IfStmt(new BoolExp(false),
+                                new PrintStmt(new IntExp(1)),
+                                new PrintStmt(new IntExp(2))));
     }
 }

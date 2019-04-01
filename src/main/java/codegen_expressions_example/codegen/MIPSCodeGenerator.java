@@ -33,7 +33,9 @@ public class MIPSCodeGenerator {
     private final Map<FunctionName, FunctionDefinition> functionDefs;
     private final List<MIPSEntry> entries;
     private final VariableTable variables;
+    private FunctionName currentFunction;
     private int expressionOffset;
+    private int ifCounter;
     // ---END INSTANCE VARIABLES
     
     public MIPSCodeGenerator(final Map<StructureName, LinkedHashMap<FieldName, Type>> structDecs,
@@ -43,6 +45,8 @@ public class MIPSCodeGenerator {
         entries = new ArrayList<MIPSEntry>();
         variables = new VariableTable();
         expressionOffset = 0;
+        currentFunction = null;
+        ifCounter = 0;
     }
 
     // specifically used in statement contexts, when a statement finishes evaluating an
@@ -141,7 +145,9 @@ public class MIPSCodeGenerator {
     public void compileFunctionDefinition(final FunctionDefinition def) {
         assert(expressionOffset == 0);
         assert(variables.isEmpty());
-        
+        assert(currentFunction == null);
+
+        currentFunction = def.name;
         add(functionNameToLabel(def.name));
         
         for (final VariableDeclaration param : def.parameters) {
@@ -166,6 +172,32 @@ public class MIPSCodeGenerator {
             doReturn();
         }
         variables.clear();
+        currentFunction = null;
+    }
+
+    private MIPSLabel freshIfLabel(final String baseName) {
+        return new MIPSLabel(currentFunction.name + "_if_" + baseName, ifCounter++);
+    }
+
+    public void compileIfStmt(final IfStmt stmt) {
+        compileExpression(stmt.guard);
+
+        // Guaranteed that guard is a boolean, from the typechecker.
+        // Put it in t0.
+        assert(expressionOffset == 4);
+        final MIPSRegister t0 = MIPSRegister.T0;
+        pop(t0);
+
+        // If it's false, make a jump.  If it's true, fall through to true branch.
+        // True branch needs to jump to after the false, which ends the if/else
+        final MIPSLabel falseStart = freshIfLabel("false_start");
+        final MIPSLabel falseEnd = freshIfLabel("false_end");
+        add(new Beq(t0, MIPSRegister.ZERO, falseStart));
+        compileStatement(stmt.ifTrue);
+        add(new J(falseEnd));
+        add(falseStart);
+        compileStatement(stmt.ifFalse);
+        add(falseEnd);
     }
     
     public void compileVariableDeclarationInitializationStmt(final VariableDeclarationInitializationStmt stmt) {
@@ -288,6 +320,8 @@ public class MIPSCodeGenerator {
             compileReturnVoidStmt((ReturnVoidStmt)stmt);
         } else if (stmt instanceof FunctionCallStmt) {
             compileFunctionCallStmt((FunctionCallStmt)stmt);
+        } else if (stmt instanceof IfStmt) {
+            compileIfStmt((IfStmt)stmt);
         } else {
             assert(false);
         }
@@ -633,5 +667,11 @@ public class MIPSCodeGenerator {
             output.close();
         }
     } // writeCompleteFile
+
+    // exclusively used in the test suite
+    public void setCurrentFunctionForTesting(final FunctionName currentFunction) {
+        assert(this.currentFunction == null);
+        this.currentFunction = currentFunction;
+    } // setCurrentFunctionForTesting
 } // MIPSCodeGenerator
 
