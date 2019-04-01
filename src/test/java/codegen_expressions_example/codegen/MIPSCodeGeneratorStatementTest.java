@@ -658,4 +658,123 @@ public class MIPSCodeGeneratorStatementTest extends MIPSCodeGeneratorTestBase<St
                                 new PrintStmt(new IntExp(1)),
                                 new PrintStmt(new IntExp(2))));
     }
+
+    // ---BEGIN CODE FOR NESTED IF TESTS---
+    private static Exp lt(final int num) {
+        return new BinopExp(new IntExp(num),
+                            new LessThanOp(),
+                            new VariableExp(new Variable("x")));
+    }
+    
+    public static final IfStmt NESTED_IF =
+        new IfStmt(lt(89),
+                   new PrintStmt(new IntExp(1)),
+                   new IfStmt(lt(79),
+                              new PrintStmt(new IntExp(2)),
+                              new IfStmt(lt(69),
+                                         new PrintStmt(new IntExp(3)),
+                                         new IfStmt(lt(59),
+                                                    new PrintStmt(new IntExp(4)),
+                                                    new PrintStmt(new IntExp(5))))));
+
+    @Test
+    public void testNestedIfFirst() throws IOException {
+        // int x = 90;
+        // if (89 < x) {
+        //   print(1);
+        // } else if (79 < x) {
+        //   print(2);
+        // } else if (69 < x) {
+        //   print(3);
+        // } else if (59 < x) {
+        //   print(4);
+        // } else {
+        //   print(5);
+        // }
+
+        assertResult(1,
+                     stmts(vardec("x", new IntType(), new IntExp(90)),
+                           NESTED_IF));
+    }
+
+    @Test
+    public void testNestedIfSecond() throws IOException {
+        // int x = 80;
+        // if (89 < x) {
+        //   print(1);
+        // } else if (79 < x) {
+        //   print(2);
+        // } else if (69 < x) {
+        //   print(3);
+        // } else if (59 < x) {
+        //   print(4);
+        // } else {
+        //   print(5);
+        // }
+
+        assertResult(2,
+                     stmts(vardec("x", new IntType(), new IntExp(80)),
+                           NESTED_IF));
+    }
+
+    @Test
+    public void testNestedIfThird() throws IOException {
+        // int x = 70;
+        // if (89 < x) {
+        //   print(1);
+        // } else if (79 < x) {
+        //   print(2);
+        // } else if (69 < x) {
+        //   print(3);
+        // } else if (59 < x) {
+        //   print(4);
+        // } else {
+        //   print(5);
+        // }
+
+        assertResult(3,
+                     stmts(vardec("x", new IntType(), new IntExp(70)),
+                           NESTED_IF));
+    }
+
+    @Test
+    public void testNestedIfFourth() throws IOException {
+        // int x = 60;
+        // if (89 < x) {
+        //   print(1);
+        // } else if (79 < x) {
+        //   print(2);
+        // } else if (69 < x) {
+        //   print(3);
+        // } else if (59 < x) {
+        //   print(4);
+        // } else {
+        //   print(5);
+        // }
+
+        assertResult(4,
+                     stmts(vardec("x", new IntType(), new IntExp(60)),
+                           NESTED_IF));
+    }
+
+    @Test
+    public void testNestedIfFifth() throws IOException {
+        // int x = 50;
+        // if (89 < x) {
+        //   print(1);
+        // } else if (79 < x) {
+        //   print(2);
+        // } else if (69 < x) {
+        //   print(3);
+        // } else if (59 < x) {
+        //   print(4);
+        // } else {
+        //   print(5);
+        // }
+
+        assertResult(5,
+                     stmts(vardec("x", new IntType(), new IntExp(50)),
+                           NESTED_IF));
+    }
+    // ---END CODE FOR NESTED IF TESTS---
 }
