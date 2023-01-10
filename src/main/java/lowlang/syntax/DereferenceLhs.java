@@ -1,34 +1,31 @@
 package lowlang.syntax;
 
+import java.util.Optional;
+
 public class DereferenceLhs implements Lhs {
     public final Lhs lhs;
-    private Type typeAfterDereference; // typechecker is expected to fill this in
+    public Optional<Type> typeAfterDereference; // needed for codegen
     
     public DereferenceLhs(final Lhs lhs) {
         this.lhs = lhs;
-        typeAfterDereference = null;
+        typeAfterDereference = Optional.empty();
     }
 
     public int hashCode() {
-        return 1 + lhs.hashCode();
+        return lhs.hashCode() + typeAfterDereference.hashCode();
     }
 
     public boolean equals(final Object other) {
-        return (other instanceof DereferenceLhs &&
-                ((DereferenceLhs)other).lhs.equals(lhs));
+        if (other instanceof DereferenceLhs) {
+            final DereferenceLhs otherLhs = (DereferenceLhs)other;
+            return (lhs.equals(otherLhs.lhs) &&
+                    typeAfterDereference.equals(otherLhs.typeAfterDereference));
+        } else {
+            return false;
+        }
     }
 
     public String toString() {
         return "*" + lhs.toString();
     }
-
-    public Type getTypeAfterDereference() {
-        assert(typeAfterDereference != null);
-        return typeAfterDereference;
-    }
-
-    public void setTypeAfterDereference(final Type typeAfterDereference) {
-        assert(typeAfterDereference != null);
-        this.typeAfterDereference = typeAfterDereference;
-    }    
 }

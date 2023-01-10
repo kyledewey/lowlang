@@ -1,30 +1,30 @@
 package lowlang.syntax;
 
+import java.util.Optional;
+
 public class DereferenceExp implements Exp {
     public final Exp exp;
-    private Type typeAfterDereference; // typechecker is expected to fill this in
+    public Optional<Type> typeAfterDereference; // needed for codegen
     
     public DereferenceExp(final Exp exp) {
         this.exp = exp;
-        typeAfterDereference = null;
+        typeAfterDereference = Optional.empty();
     }
 
-    public int hashCode() { return exp.hashCode(); }
+    public int hashCode() {
+        return exp.hashCode() + typeAfterDereference.hashCode();
+    }
+    
     public boolean equals(final Object other) {
-        return (other instanceof DereferenceExp &&
-                ((DereferenceExp)other).exp.equals(exp));
+        if (other instanceof DereferenceExp) {
+            final DereferenceExp asDeref = (DereferenceExp)other;
+            return (exp.equals(asDeref.exp) &&
+                    typeAfterDereference.equals(asDeref.typeAfterDereference));
+        } else {
+            return false;
+        }
     }
     public String toString() {
         return "*" + exp.toString();
     }
-
-    public Type getTypeAfterDereference() {
-        assert(typeAfterDereference != null);
-        return typeAfterDereference;
-    }
-
-    public void setTypeAfterDereference(final Type typeAfterDereference) {
-        assert(typeAfterDereference != null);
-        this.typeAfterDereference = typeAfterDereference;
-    }    
 } // DereferenceExp

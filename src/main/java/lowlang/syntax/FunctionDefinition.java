@@ -1,16 +1,16 @@
 package lowlang.syntax;
 
-import java.util.Arrays;
+import java.util.List;
 
 public class FunctionDefinition {
     public final Type returnType;
     public final FunctionName name;
-    public final VariableDeclaration[] parameters;
+    public final List<VariableDeclaration> parameters;
     public final Stmt body;
 
     public FunctionDefinition(final Type returnType,
                               final FunctionName name,
-                              final VariableDeclaration[] parameters,
+                              final List<VariableDeclaration> parameters,
                               final Stmt body) {
         this.returnType = returnType;
         this.name = name;
@@ -21,7 +21,7 @@ public class FunctionDefinition {
     public int hashCode() {
         return (returnType.hashCode() +
                 name.hashCode() +
-                Arrays.deepHashCode(parameters) +
+                parameters.hashCode() +
                 body.hashCode());
     }
 
@@ -31,7 +31,7 @@ public class FunctionDefinition {
                 (FunctionDefinition)other;
             return (otherDef.returnType.equals(returnType) &&
                     otherDef.name.equals(name) &&
-                    Arrays.deepEquals(otherDef.parameters, parameters) &&
+                    otherDef.parameters.equals(parameters) &&
                     otherDef.body.equals(body));
         } else {
             return false;

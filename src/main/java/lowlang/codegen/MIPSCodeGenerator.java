@@ -147,11 +147,11 @@ public class MIPSCodeGenerator {
     public void compileMainFunctionDefinition(final FunctionDefinition def) {
         assert(def.returnType.equals(new VoidType()));
         assert(def.name.name.equals("main"));
-        assert(def.parameters.length == 0);
+        assert(def.parameters.size() == 0);
 
         // call into the user's main and then exit
         add(functionNameToLabel(REAL_MAIN));
-        compileFunctionCallExp(new FunctionCallExp(def.name, new Exp[0]));
+        compileFunctionCallExp(new FunctionCallExp(def.name, new ArrayList<Exp>()));
         mainEnd();
         
         compileFunctionDefinition(def);
@@ -267,7 +267,7 @@ public class MIPSCodeGenerator {
             add(new Addi(destination, MIPSRegister.SP, offset));
         } else if (lhs instanceof FieldAccessLhs) {
             final FieldAccessLhs asField = (FieldAccessLhs)lhs;
-            final int offsetFromField = fieldOffset(asField.getLhsStructure(),
+            final int offsetFromField = fieldOffset(asField.lhsStructure.get(),
                                                     asField.field);
             putLhsAddressIntoRegister(destination, asField.lhs);
             add(new Addi(destination, destination, offsetFromField));
@@ -285,10 +285,10 @@ public class MIPSCodeGenerator {
             return variables.variableSize(((VariableLhs)lhs).variable);
         } else if (lhs instanceof FieldAccessLhs) {
             final FieldAccessLhs asField = (FieldAccessLhs)lhs;
-            return sizeof(structDecs.get(asField.getLhsStructure()).get(asField.field));
+            return sizeof(structDecs.get(asField.lhsStructure.get()).get(asField.field));
         } else if (lhs instanceof DereferenceLhs) {
             final DereferenceLhs asDereference = (DereferenceLhs)lhs;
-            return sizeof(asDereference.getTypeAfterDereference());
+            return sizeof(asDereference.typeAfterDereference.get());
         } else {
             assert(false);
             return 0;
@@ -520,7 +520,7 @@ public class MIPSCodeGenerator {
         // on the stack.  Additionally, we need to know what the type of the
         // expression is (thanks typechecker!), which will tell us how much
         // to load in
-        final int loadSize = sizeof(exp.getTypeAfterDereference());
+        final int loadSize = sizeof(exp.typeAfterDereference.get());
 
         // memory address is on top of stack
         compileExpression(exp.exp);
@@ -582,7 +582,7 @@ public class MIPSCodeGenerator {
     public void compileFieldAccessExp(final FieldAccessExp exp) {
         // access a given field of a structure
         // will consume the entire structure on the stack
-        final StructureName structName = exp.getExpStructure();
+        final StructureName structName = exp.expStructure.get();
         final int wholeStructureSize = sizeof(new StructureType(structName));
         final int offset = fieldOffset(structName, exp.field);
         final int accessSize = sizeof(structDecs.get(structName).get(exp.field));

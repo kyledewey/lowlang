@@ -1,26 +1,31 @@
 package lowlang.syntax;
 
+import java.util.Optional;
+
 public class FieldAccessExp implements Exp {
     public final Exp exp;
-    private StructureName expStructure; // Typechecker is expected to fill this in
+    public Optional<StructureName> expStructure; // needed for codegen
     public final FieldName field;
 
     public FieldAccessExp(final Exp exp,
                           final FieldName field) {
         this.exp = exp;
-        expStructure = null;
+        expStructure = Optional.empty();
         this.field = field;
     }
 
     public int hashCode() {
-        return exp.hashCode() + field.hashCode();
+        return (exp.hashCode() +
+                expStructure.hashCode() +
+                field.hashCode());
     }
 
     public boolean equals(final Object other) {
         if (other instanceof FieldAccessExp) {
             final FieldAccessExp otherExp = (FieldAccessExp)other;
-            return (otherExp.exp.equals(exp) &&
-                    otherExp.field.equals(field));
+            return (exp.equals(otherExp.exp) &&
+                    expStructure.equals(otherExp.expStructure) &&
+                    field.equals(otherExp.field));
         } else {
             return false;
         }
@@ -28,15 +33,5 @@ public class FieldAccessExp implements Exp {
 
     public String toString() {
         return exp.toString() + "." + field.toString();
-    }
-
-    public StructureName getExpStructure() {
-        assert(expStructure != null);
-        return expStructure;
-    }
-
-    public void setExpStructure(final StructureName expStructure) {
-        assert(expStructure != null);
-        this.expStructure = expStructure;
     }
 }

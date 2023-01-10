@@ -1,10 +1,12 @@
 package lowlang.syntax;
 
+import java.util.List;
+
 public class FunctionCallStmt implements Stmt {
     public final FunctionCallExp asExp;
 
     public FunctionCallStmt(final FunctionName name,
-                            final Exp[] parameters) {
+                            final List<Exp> parameters) {
         asExp = new FunctionCallExp(name, parameters);
     }
 
@@ -18,7 +20,7 @@ public class FunctionCallStmt implements Stmt {
     }
 
     public String toString() {
-        return asExp.toString();
+        return asExp.toString() + ";";
     }
 }
 
