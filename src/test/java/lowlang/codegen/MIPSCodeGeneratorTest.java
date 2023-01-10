@@ -5,6 +5,8 @@ import lowlang.syntax.*;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.Optional;
+import java.util.Arrays;
 
 import java.io.File;
 import java.io.IOException;
@@ -131,7 +133,7 @@ public class MIPSCodeGeneratorTest extends MIPSCodeGeneratorTestBase<Exp> {
         // TODO: this is very bad; assumes initial value of allocated memory
         final DereferenceExp exp =
             new DereferenceExp(new MallocExp(new IntegerLiteralExp(4)));
-        exp.setTypeAfterDereference(new IntType());
+        exp.typeAfterDereference = Optional.of(new IntType());
         assertResult(0, exp);
     }
 
@@ -145,7 +147,7 @@ public class MIPSCodeGeneratorTest extends MIPSCodeGeneratorTestBase<Exp> {
         final FieldName fieldName = new FieldName("x");
         final MakeStructureExp makeStruct =
             new MakeStructureExp(structName,
-                                 new Exp[] { new IntegerLiteralExp(7) });
+                                 Arrays.asList(new IntegerLiteralExp(7)));
         final FieldAccessExp access = new FieldAccessExp(makeStruct, fieldName);
         final Map<StructureName, LinkedHashMap<FieldName, Type>> structDecs =
             new HashMap<StructureName, LinkedHashMap<FieldName, Type>>() {{
@@ -153,7 +155,7 @@ public class MIPSCodeGeneratorTest extends MIPSCodeGeneratorTestBase<Exp> {
                     put(fieldName, new IntType());
                 }});
             }};
-        access.setExpStructure(structName);
+        access.expStructure = Optional.of(structName);
         assertResult(7, access, structDecs);
     }
 
@@ -168,9 +170,8 @@ public class MIPSCodeGeneratorTest extends MIPSCodeGeneratorTestBase<Exp> {
         final FieldName fieldName = new FieldName("x");
         final MakeStructureExp makeStruct =
             new MakeStructureExp(structName,
-                                 new Exp[] {
-                                     new IntegerLiteralExp(1),
-                                     new IntegerLiteralExp(2) });
+                                 Arrays.asList(new IntegerLiteralExp(1),
+                                               new IntegerLiteralExp(2)));
         final FieldAccessExp access = new FieldAccessExp(makeStruct, fieldName);
         final Map<StructureName, LinkedHashMap<FieldName, Type>> structDecs =
             new HashMap<StructureName, LinkedHashMap<FieldName, Type>>() {{
@@ -179,7 +180,7 @@ public class MIPSCodeGeneratorTest extends MIPSCodeGeneratorTestBase<Exp> {
                     put(new FieldName("y"), new IntType());
                 }});
             }};
-        access.setExpStructure(structName);
+        access.expStructure = Optional.of(structName);
         assertResult(1, access, structDecs);
     }
 
@@ -194,9 +195,8 @@ public class MIPSCodeGeneratorTest extends MIPSCodeGeneratorTestBase<Exp> {
         final FieldName fieldName = new FieldName("y");
         final MakeStructureExp makeStruct =
             new MakeStructureExp(structName,
-                                 new Exp[] {
-                                     new IntegerLiteralExp(1),
-                                     new IntegerLiteralExp(2) });
+                                 Arrays.asList(new IntegerLiteralExp(1),
+                                               new IntegerLiteralExp(2)));
         final FieldAccessExp access = new FieldAccessExp(makeStruct, fieldName);
         final Map<StructureName, LinkedHashMap<FieldName, Type>> structDecs =
             new HashMap<StructureName, LinkedHashMap<FieldName, Type>>() {{
@@ -205,7 +205,7 @@ public class MIPSCodeGeneratorTest extends MIPSCodeGeneratorTestBase<Exp> {
                     put(fieldName, new IntType());
                 }});
             }};
-        access.setExpStructure(structName);
+        access.expStructure = Optional.of(structName);
         assertResult(2, access, structDecs);
     }
 
@@ -223,20 +223,16 @@ public class MIPSCodeGeneratorTest extends MIPSCodeGeneratorTestBase<Exp> {
 
         final Exp baseExp =
             new MakeStructureExp(new StructureName("Foo"),
-                                 new Exp[] {
-                                     new MakeStructureExp(new StructureName("Bar"),
-                                                          new Exp[] {
-                                                              new IntegerLiteralExp(1),
-                                                              new IntegerLiteralExp(2)
-                                                          }),
-                                     new IntegerLiteralExp(3)
-                                 });
+                                 Arrays.asList(new MakeStructureExp(new StructureName("Bar"),
+                                                                    Arrays.asList(new IntegerLiteralExp(1),
+                                                                                  new IntegerLiteralExp(2))),
+                                               new IntegerLiteralExp(3)));
         final FieldAccessExp accessF =
             new FieldAccessExp(baseExp, new FieldName("f"));
-        accessF.setExpStructure(new StructureName("Foo"));
+        accessF.expStructure = Optional.of(new StructureName("Foo"));
         final FieldAccessExp accessY =
             new FieldAccessExp(accessF, new FieldName("y"));
-        accessY.setExpStructure(new StructureName("Bar"));
+        accessY.expStructure = Optional.of(new StructureName("Bar"));
 
         final Map<StructureName, LinkedHashMap<FieldName, Type>> structDecs =
             new HashMap<StructureName, LinkedHashMap<FieldName, Type>>() {{
@@ -267,20 +263,16 @@ public class MIPSCodeGeneratorTest extends MIPSCodeGeneratorTestBase<Exp> {
 
         final Exp baseExp =
             new MakeStructureExp(new StructureName("Foo"),
-                                 new Exp[] {
-                                     new IntegerLiteralExp(1),
-                                     new MakeStructureExp(new StructureName("Bar"),
-                                                          new Exp[] {
-                                                              new IntegerLiteralExp(2),
-                                                              new IntegerLiteralExp(3)
-                                                          })
-                                 });
+                                 Arrays.asList(new IntegerLiteralExp(1),
+                                               new MakeStructureExp(new StructureName("Bar"),
+                                                                    Arrays.asList(new IntegerLiteralExp(2),
+                                                                                  new IntegerLiteralExp(3)))));
         final FieldAccessExp accessF =
             new FieldAccessExp(baseExp, new FieldName("f"));
-        accessF.setExpStructure(new StructureName("Foo"));
+        accessF.expStructure = Optional.of(new StructureName("Foo"));
         final FieldAccessExp accessX =
             new FieldAccessExp(accessF, new FieldName("x"));
-        accessX.setExpStructure(new StructureName("Bar"));
+        accessX.expStructure = Optional.of(new StructureName("Bar"));
 
         final Map<StructureName, LinkedHashMap<FieldName, Type>> structDecs =
             new HashMap<StructureName, LinkedHashMap<FieldName, Type>>() {{

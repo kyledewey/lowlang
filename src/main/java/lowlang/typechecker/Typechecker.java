@@ -205,7 +205,6 @@ public class Typechecker {
         }
         if (expectedTypes.hasNext() ||
             receivedTypes.hasNext()) {
-        } else {
             throw new TypeErrorException("Mismatch in number of parameters");
         }
     }
@@ -499,6 +498,16 @@ public class Typechecker {
                 // Just need to check that it's well-typed.  Permitted to
                 // return anything.
                 typeofExp(((ExpStmt)stmt).exp);
+                return new Pair<InScope, Boolean>(this, Boolean.valueOf(false));
+            } else if (stmt instanceof PrintStmt) {
+                final PrintStmt asPrint = (PrintStmt)stmt;
+                final Type expType = typeofExp(asPrint.exp);
+                if (!(expType instanceof IntType ||
+                      expType instanceof BoolType)) {
+                    throw new TypeErrorException("Attempt to print something that's not an integer or boolean: " +
+                                                 expType.toString());
+                }
+                asPrint.expType = Optional.of(expType);
                 return new Pair<InScope, Boolean>(this, Boolean.valueOf(false));
             } else {
                 assert(false);
