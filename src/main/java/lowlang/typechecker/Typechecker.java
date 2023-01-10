@@ -486,10 +486,6 @@ public class Typechecker {
                 final Type receivedType = typeofExp(((ReturnExpStmt)stmt).exp);
                 ensureTypesSame(returnType, receivedType);
                 return new Pair<InScope, Boolean>(this, Boolean.valueOf(true));
-            } else if (stmt instanceof FreeStmt) {
-                ensureTypesSame(new PointerType(new VoidType()),
-                                typeofExp(((FreeStmt)stmt).exp));
-                return new Pair<InScope, Boolean>(this, Boolean.valueOf(false));
             } else if (stmt instanceof SequenceStmt) {
                 final SequenceStmt asSeq = (SequenceStmt)stmt;
                 final Pair<InScope, Boolean> fromLeft = typecheckStmt(asSeq.first);
