@@ -17,8 +17,8 @@ public abstract class MIPSCodeGeneratorTestBase<A> {
     @Rule public TestName name = new TestName();
 
     public int parseOutput(final String[] spimOutput) {
-        assert(spimOutput.length == 2);
-        return Integer.parseInt(spimOutput[1]);
+        assert(spimOutput.length == 1);
+        return Integer.parseInt(spimOutput[0]);
     } // parseOutput
 
     public void assertResult(final int expected,
