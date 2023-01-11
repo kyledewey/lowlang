@@ -26,22 +26,24 @@ exp ::= i | `true` | `false` | var |
         exp op exp |
         sn `(` exp* `)` |  // creates a structure on the stack
         fn `(` exp* `)` |  // calls a function
+        exp `(` exp* `)` | // function call through pointer
         `(` type `)` exp | // cast
-        `&` lhs |          // address-of (reference)
+        `&` lhs |          // address-of data
+        `&` fn  |          // address-of function
         `*` exp |          // dereference
         exp `.` field      // structure field access
-varDec ::= type var
+vardec ::= type var
 stmt ::= `if` `(` exp `)` stmt [`else` stmt] |
          `while` `(` exp `)` stmt |
          `break` `;` |
          `continue` `;` |
-         varDec `=` exp `;` | // combined variable declaration and initialization
+         vardec `=` exp `;` | // combined variable declaration and initialization
          lhs `=` exp `;` |    // assignment
          `return` [exp] `;` | // return
          `{` stmt* `}` |      // blocks
          exp `;`              // expression statement
-structDec ::= sn { varDec* }
-fDef ::= type fn(varDec*) { stmt }
+structDec ::= sn { vardec* }
+fDef ::= type fn(vardec*) { stmt }
 program ::= structDec* fDef*
 ```
 
@@ -65,6 +67,9 @@ The typechecker and related semantic analysis needs to check:
 
 Precedence is loosely based on [C](https://en.cppreference.com/w/c/language/operator_precedence).
 
+Structure creation, direct function calls, and indirect function calls cannot be distinguished purely syntactically, so these are a call-like.
+Address-of similarly can be data or a function.
+
 ```
 i is an integer
 id is an identifier
@@ -82,27 +87,28 @@ primaryExp ::= i | `true` | `false` | id | `(` exp `)` |
                `sizeof` `(` type `)` |
                `malloc` `(` exp `)`
 dotOrCall ::= `.` id | `(` exps `)`
-dotOrCallExp::= primaryExp prec1Item*
+dotOrCallExp::= primaryExp dotOrCall*
 castOrMemItem ::= `(` type `)` | `*` | `&`
-castOrMemExp ::= prec2Item* dotOrCallExp
+castOrMemExp ::= castOrMemItem* dotOrCallExp
 multExp ::= castOrMemExp ((`*` | `/`) castOrMemExp)*
 addExp ::= multExp ((`+` | `-`) multExp)*
 compareExp ::= addExp (`<` addExp)*
 equalsExp ::= compareExp (`==` compareExp)*
 exp ::= equalsExp
-varDec ::= type var
+vardec ::= type var
 stmt ::= `if` `(` exp `)` stmt [`else` stmt] |
          `while` `(` exp `)` stmt |
          `break` `;` |
          `continue` `;` |
-         varDec `=` exp `;` |    // combined variable declaration and initialization
-         lhs `=` exp `;` |       // assignment
-         `return` [exp] `;` |    // return
-         `{` stmt* `}` |         // blocks
-         exp `;` |               // expression statement
-         `print` `(` exp `)` `;` // printing
-structDec ::= `struct` id `{` varDec* `}` `;`
-fDef ::= type id `(` varDec* `)` `{` stmt `}`
+         `return` [exp] `;` |      // return
+         `{` stmt* `}` |           // blocks
+         `print` `(` exp `)` `;` | // printing
+         vardec `=` exp `;` |      // combined variable declaration and initialization
+         lhs `=` exp `;` |         // assignment
+         exp `;`                   // expression statement
+structDec ::= `struct` id `{` (vardec `;`)* `}` `;`
+params ::= [vardec (`,` vardec)*]
+fDef ::= type id `(` params `)` `{` stmt* `}`
 program ::= structDec* fDef*
 ```
 
@@ -139,3 +145,5 @@ program ::= structDec* fDef*
 - ReturnToken: 26
 - StructToken: 27
 - PrintToken: 28
+- LeftCurlyBraceToken: 29
+- RightCurlyBraceToken: 30

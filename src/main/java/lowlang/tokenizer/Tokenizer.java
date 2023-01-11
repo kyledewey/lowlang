@@ -45,6 +45,8 @@ public class Tokenizer {
             add(new Pair<String, Token>("-", new MinusToken()));
             add(new Pair<String, Token>("<", new LessThanToken()));
             add(new Pair<String, Token>(";", new SemicolonToken()));
+            add(new Pair<String, Token>("{", new LeftCurlyBraceToken()));
+            add(new Pair<String, Token>("}", new RightCurlyBraceToken()));
         }};
 
     public final String input;

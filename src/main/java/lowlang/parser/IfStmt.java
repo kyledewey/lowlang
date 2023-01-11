@@ -1,13 +1,15 @@
 package lowlang.parser;
 
+import java.util.Optional;
+
 public class IfStmt implements Stmt {
     public final Exp guard;
     public final Stmt ifTrue;
-    public final Stmt ifFalse;
+    public final Optional<Stmt> ifFalse;
 
     public IfStmt(final Exp guard,
                   final Stmt ifTrue,
-                  final Stmt ifFalse) {
+                  final Optional<Stmt> ifFalse) {
         this.guard = guard;
         this.ifTrue = ifTrue;
         this.ifFalse = ifFalse;
