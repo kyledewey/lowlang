@@ -1,6 +1,6 @@
 package lowlang.typechecker;
 
-import lowlang.syntax.Type;
+import lowlang.parser.Type;
 
 public class TypeErrorException extends Exception {
     public TypeErrorException(final String message) {

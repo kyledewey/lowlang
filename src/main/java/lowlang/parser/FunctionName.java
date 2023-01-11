@@ -1,4 +1,4 @@
-package lowlang.syntax;
+package lowlang.parser;
 
 public class FunctionName extends Name {
     public FunctionName(final String name) {

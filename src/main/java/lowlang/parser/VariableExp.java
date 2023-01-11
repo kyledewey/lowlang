@@ -1,4 +1,4 @@
-package lowlang.syntax;
+package lowlang.parser;
 
 public class VariableExp implements Exp {
     public final Variable variable;

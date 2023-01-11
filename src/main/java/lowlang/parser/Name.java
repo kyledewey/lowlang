@@ -1,4 +1,4 @@
-package lowlang.syntax;
+package lowlang.parser;
 
 public abstract class Name {
     public final String name;

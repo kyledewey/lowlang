@@ -1,4 +1,4 @@
-package lowlang.syntax;
+package lowlang.parser;
 
 public class MallocExp implements Exp {
     public final Exp amount;

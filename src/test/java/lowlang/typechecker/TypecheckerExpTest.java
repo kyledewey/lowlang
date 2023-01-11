@@ -33,12 +33,6 @@ public class TypecheckerExpTest {
     }
 
     @Test
-    public void testCharacterLiteralExp() {
-        assertExpType(new CharType(),
-                      new CharacterLiteralExp('a'));
-    }
-
-    @Test
     public void testBooleanLiteralExp() {
         assertExpType(new BoolType(),
                       new BooleanLiteralExp(true));
@@ -73,7 +67,7 @@ public class TypecheckerExpTest {
     @Test
     public void testBinopPlusNonIntOrPointer() {
         assertExpType(null,
-                      new BinopExp(new CharacterLiteralExp('a'),
+                      new BinopExp(new BooleanLiteralExp(true),
                                    new PlusOp(),
                                    new IntegerLiteralExp(1)));
     }
@@ -91,7 +85,7 @@ public class TypecheckerExpTest {
         assertExpType(null,
                       new BinopExp(new IntegerLiteralExp(1),
                                    new MinusOp(),
-                                   new CharacterLiteralExp('a')));
+                                   new BooleanLiteralExp(true)));
     }
 
     @Test
@@ -107,7 +101,7 @@ public class TypecheckerExpTest {
         assertExpType(null,
                       new BinopExp(new IntegerLiteralExp(1),
                                    new MultOp(),
-                                   new CharacterLiteralExp('a')));
+                                   new BooleanLiteralExp(false)));
     }
 
     @Test
@@ -123,21 +117,21 @@ public class TypecheckerExpTest {
         assertExpType(null,
                       new BinopExp(new IntegerLiteralExp(1),
                                    new DivOp(),
-                                   new CharacterLiteralExp('a')));
+                                   new BooleanLiteralExp(true)));
     }
 
     @Test
     public void testEqualSameType() {
         assertExpType(new BoolType(),
-                      new BinopExp(new CharacterLiteralExp('a'),
+                      new BinopExp(new IntegerLiteralExp(1),
                                    new EqualsOp(),
-                                   new CharacterLiteralExp('b')));
+                                   new IntegerLiteralExp(1)));
     }
 
     @Test
     public void testEqualDifferentTypes() {
         assertExpType(null,
-                      new BinopExp(new CharacterLiteralExp('a'),
+                      new BinopExp(new BooleanLiteralExp(true),
                                    new EqualsOp(),
                                    new IntegerLiteralExp(1)));
     }
@@ -153,7 +147,7 @@ public class TypecheckerExpTest {
     @Test
     public void testLessThanNonInts() {
         assertExpType(null,
-                      new BinopExp(new CharacterLiteralExp('a'),
+                      new BinopExp(new BooleanLiteralExp(true),
                                    new LessThanOp(),
                                    new IntegerLiteralExp(0)));
     }
@@ -162,15 +156,15 @@ public class TypecheckerExpTest {
     public void testCastWellTypedSubexpression() {
         assertExpType(new IntType(),
                       new CastExp(new IntType(),
-                                  new CharacterLiteralExp('a')));
+                                  new BooleanLiteralExp(true)));
     }
 
     @Test
     public void testCastIllTypedSubexpression() {
         assertExpType(null,
-                      new CastExp(new CharType(),
+                      new CastExp(new BoolType(),
                                   new BinopExp(new IntegerLiteralExp(1),
                                                new PlusOp(),
-                                               new CharacterLiteralExp('a'))));
+                                               new BooleanLiteralExp(true))));
     }
 } // TypecheckerTest

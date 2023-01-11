@@ -1,4 +1,4 @@
-package lowlang.syntax;
+package lowlang.parser;
 
 public class PointerType implements Type {
     public final Type pointsTo;

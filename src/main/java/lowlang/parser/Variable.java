@@ -1,4 +1,4 @@
-package lowlang.syntax;
+package lowlang.parser;
 
 public class Variable extends Name {
     public Variable(final String name) {

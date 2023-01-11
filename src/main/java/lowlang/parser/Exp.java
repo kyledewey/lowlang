@@ -1,3 +1,3 @@
-package lowlang.syntax;
+package lowlang.parser;
 
 public interface Exp {}

@@ -1,4 +1,4 @@
-package lowlang.syntax;
+package lowlang.parser;
 
 public class FieldName extends Name {
     public FieldName(final String name) {

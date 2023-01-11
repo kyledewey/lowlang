@@ -1,4 +1,4 @@
-package lowlang.syntax;
+package lowlang.parser;
 
 public class MultOp implements Op {
     public int hashCode() { return 2; }

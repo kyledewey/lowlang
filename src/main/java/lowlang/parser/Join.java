@@ -1,4 +1,4 @@
-package lowlang.syntax;
+package lowlang.parser;
 
 import java.util.List;
 import java.util.Arrays;

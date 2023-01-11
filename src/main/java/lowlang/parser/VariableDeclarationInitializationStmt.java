@@ -1,4 +1,4 @@
-package lowlang.syntax;
+package lowlang.parser;
 
 public class VariableDeclarationInitializationStmt implements Stmt {
     public final VariableDeclaration varDec;

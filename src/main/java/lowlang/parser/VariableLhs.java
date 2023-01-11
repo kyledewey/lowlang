@@ -1,4 +1,4 @@
-package lowlang.syntax;
+package lowlang.parser;
 
 public class VariableLhs implements Lhs {
     public final Variable variable;

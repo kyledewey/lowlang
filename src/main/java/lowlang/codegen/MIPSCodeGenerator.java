@@ -425,7 +425,6 @@ public class MIPSCodeGenerator {
             return 0;
         } else if (type instanceof IntType ||
                    type instanceof BoolType ||
-                   type instanceof CharType ||
                    type instanceof PointerType) { // 32-bit word
             return 4;
         } else if (type instanceof StructureType) {
@@ -487,11 +486,6 @@ public class MIPSCodeGenerator {
     public void compileBooleanLiteralExp(final BooleanLiteralExp exp) {
         pushValue((exp.value) ? 1 : 0);
     } // compileBooleanLiteralExp
-
-    // char: integer in the range for a char
-    public void compileCharacterLiteralExp(final CharacterLiteralExp exp) {
-        pushValue((int)exp.value);
-    } // compileCharacterLiteralExp
 
     public void compileSizeofExp(final SizeofExp exp) {
         pushValue(sizeof(exp.type));
@@ -705,8 +699,6 @@ public class MIPSCodeGenerator {
             compileIntegerLiteralExp((IntegerLiteralExp)exp);
         } else if (exp instanceof BooleanLiteralExp) {
             compileBooleanLiteralExp((BooleanLiteralExp)exp);
-        } else if (exp instanceof CharacterLiteralExp) {
-            compileCharacterLiteralExp((CharacterLiteralExp)exp);
         } else if (exp instanceof BinopExp) {
             compileBinopExp((BinopExp)exp);
         } else if (exp instanceof VariableExp) {

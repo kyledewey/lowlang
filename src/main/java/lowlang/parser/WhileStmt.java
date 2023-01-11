@@ -1,4 +1,4 @@
-package lowlang.syntax;
+package lowlang.parser;
 
 public class WhileStmt implements Stmt {
     public final Exp guard;

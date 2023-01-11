@@ -1,4 +1,4 @@
-package lowlang.syntax;
+package lowlang.parser;
 
 public class IntegerLiteralExp implements Exp {
     public final int value;

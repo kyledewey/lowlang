@@ -1,4 +1,4 @@
-package lowlang.syntax;
+package lowlang.parser;
 
 public class StructureName extends Name {
     public StructureName(final String name) {

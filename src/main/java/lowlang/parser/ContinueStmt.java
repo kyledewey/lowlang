@@ -1,4 +1,4 @@
-package lowlang.syntax;
+package lowlang.parser;
 
 public class ContinueStmt implements Stmt {
     public int hashCode() { return 1; }

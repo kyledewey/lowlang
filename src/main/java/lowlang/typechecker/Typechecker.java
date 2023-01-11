@@ -374,8 +374,6 @@ public class Typechecker {
         public Type typeofExp(final Exp exp) throws TypeErrorException {
             if (exp instanceof IntegerLiteralExp) {
                 return new IntType();
-            } else if (exp instanceof CharacterLiteralExp) {
-                return new CharType();
             } else if (exp instanceof BooleanLiteralExp) {
                 return new BoolType();
             } else if (exp instanceof VariableExp) {

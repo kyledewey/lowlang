@@ -1,4 +1,4 @@
-package lowlang.syntax;
+package lowlang.parser;
 
 public class IntType implements Type {
     public int hashCode() { return 0; }

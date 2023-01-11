@@ -1,4 +1,4 @@
-package lowlang.syntax;
+package lowlang.parser;
 
 public class StructureType implements Type {
     public final StructureName name;

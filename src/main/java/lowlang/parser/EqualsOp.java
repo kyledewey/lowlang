@@ -1,4 +1,4 @@
-package lowlang.syntax;
+package lowlang.parser;
 
 public class EqualsOp implements Op {
     public int hashCode() { return 4; }

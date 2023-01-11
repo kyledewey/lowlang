@@ -1,7 +1,7 @@
 package lowlang.codegen;
 
-import lowlang.syntax.Variable;
-import lowlang.syntax.Type;
+import lowlang.parser.Variable;
+import lowlang.parser.Type;
 
 import java.util.Iterator;
 import java.util.LinkedList;

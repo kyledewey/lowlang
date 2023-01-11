@@ -1,7 +1,7 @@
 package lowlang.codegen;
 
-import lowlang.syntax.Variable;
-import lowlang.syntax.Type;
+import lowlang.parser.Variable;
+import lowlang.parser.Type;
 
 public class VariableEntry {
     public final Variable variable;

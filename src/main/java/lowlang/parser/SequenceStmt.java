@@ -1,4 +1,4 @@
-package lowlang.syntax;
+package lowlang.parser;
 
 public class SequenceStmt implements Stmt {
     public final Stmt first;

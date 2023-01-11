@@ -108,11 +108,6 @@ public class MIPSCodeGeneratorTest extends MIPSCodeGeneratorTestBase<Exp> {
     }
 
     @Test
-    public void testSizeofChar() throws IOException {
-        assertResult(4, new SizeofExp(new CharType()));
-    }
-
-    @Test
     public void testSizeofPointer() throws IOException {
         assertResult(4, new SizeofExp(new PointerType(new IntType())));
     }
@@ -121,11 +116,6 @@ public class MIPSCodeGeneratorTest extends MIPSCodeGeneratorTestBase<Exp> {
     public void testMalloc() throws IOException {
         // TODO: this is very bad; assumes memory address
         assertResult(268566528, new MallocExp(new IntegerLiteralExp(4)));
-    }
-
-    @Test
-    public void testCast() throws IOException {
-        assertResult((int)'a', new CastExp(new IntType(), new CharacterLiteralExp('a')));
     }
 
     @Test

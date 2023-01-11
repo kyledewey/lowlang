@@ -1,4 +1,4 @@
-package lowlang.syntax;
+package lowlang.parser;
 
 public class SizeofExp implements Exp {
     public final Type type;
