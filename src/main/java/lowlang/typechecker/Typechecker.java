@@ -1,5 +1,6 @@
 package lowlang.typechecker;
 
+import lowlang.tokenizer.Pair;
 import lowlang.syntax.*;
 
 import java.util.Map;
