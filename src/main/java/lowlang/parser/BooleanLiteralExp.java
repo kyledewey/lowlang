@@ -1,4 +1,4 @@
-package lowlang.syntax;
+package lowlang.parser;
 
 public class BooleanLiteralExp implements Exp {
     public final boolean value;

@@ -1,4 +1,4 @@
-package lowlang.syntax;
+package lowlang.parser;
 
 public class BoolType implements Type {
     public int hashCode() { return 3; }

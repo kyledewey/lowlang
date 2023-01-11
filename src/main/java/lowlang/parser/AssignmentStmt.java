@@ -1,4 +1,4 @@
-package lowlang.syntax;
+package lowlang.parser;
 
 public class AssignmentStmt implements Stmt {
     public final Lhs lhs;

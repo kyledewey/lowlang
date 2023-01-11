@@ -1,6 +1,6 @@
 package lowlang.codegen;
 
-import lowlang.syntax.*;
+import lowlang.parser.*;
 
 import java.util.Map;
 import java.util.HashMap;

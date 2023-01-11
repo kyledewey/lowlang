@@ -1,6 +1,6 @@
 package lowlang.typechecker;
 
-import lowlang.syntax.*;
+import lowlang.parser.*;
 
 import java.util.List;
 import java.util.ArrayList;

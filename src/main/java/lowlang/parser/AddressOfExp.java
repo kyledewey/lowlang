@@ -1,4 +1,4 @@
-package lowlang.syntax;
+package lowlang.parser;
 
 public class AddressOfExp implements Exp {
     public final Lhs lhs;

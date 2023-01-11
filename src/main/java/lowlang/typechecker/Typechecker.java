@@ -1,7 +1,7 @@
 package lowlang.typechecker;
 
 import lowlang.tokenizer.Pair;
-import lowlang.syntax.*;
+import lowlang.parser.*;
 
 import java.util.Map;
 import java.util.HashMap;

@@ -1,6 +1,6 @@
 package lowlang.codegen;
 
-import lowlang.syntax.*;
+import lowlang.parser.*;
 import static lowlang.codegen.MIPSCodeGeneratorStatementTest.vardec;
 import static lowlang.codegen.MIPSCodeGeneratorStatementTest.stmts;
 import static lowlang.codegen.MIPSCodeGeneratorStatementTest.printVar;
