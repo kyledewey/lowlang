@@ -70,6 +70,11 @@ Precedence is loosely based on [C](https://en.cppreference.com/w/c/language/oper
 Structure creation, direct function calls, and indirect function calls cannot be distinguished purely syntactically, so these are a call-like.
 Address-of similarly can be data or a function.
 
+Can get the address of:
+- Variable
+- Function name
+- Field of a struct
+
 ```
 i is an integer
 id is an identifier

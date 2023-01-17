@@ -65,6 +65,15 @@ public class MIPSCodeGenerator {
         expressionOffset = 0;
     }
 
+    public static boolean containsReturn(final List<Stmt> stmts) {
+        for (final Stmt stmt : stmts) {
+            if (containsReturn(stmt)) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
     public static boolean containsReturn(final Stmt stmt) {
         if (stmt instanceof VariableDeclarationInitializationStmt ||
             stmt instanceof AssignmentStmt ||
@@ -73,15 +82,17 @@ public class MIPSCodeGenerator {
             stmt instanceof BreakStmt ||
             stmt instanceof ContinueStmt) {
             return false;
-        } else if (stmt instanceof SequenceStmt) {
-            final SequenceStmt asSeq = (SequenceStmt)stmt;
-            return containsReturn(asSeq.first) || containsReturn(asSeq.second);
-        } else if (stmt instanceof ReturnVoidStmt ||
-                   stmt instanceof ReturnExpStmt) {
+        } else if (stmt instanceof BlockStmt) {
+            return containsReturn(((BlockStmt)stmt).stmts);
+        } else if (stmt instanceof ReturnStmt) {
             return true;
         } else if (stmt instanceof IfStmt) {
             final IfStmt asIf = (IfStmt)stmt;
-            return containsReturn(asIf.ifTrue) || containsReturn(asIf.ifFalse);
+            if (asIf.ifFalse.isPresent()) {
+                return containsReturn(asIf.ifTrue) || containsReturn(asIf.ifFalse.get());
+            } else {
+                return containsReturn(asIf.ifTrue);
+            }
         } else if (stmt instanceof WhileStmt) {
             return containsReturn(((WhileStmt)stmt).body);
         } else {
@@ -178,7 +189,7 @@ public class MIPSCodeGenerator {
                                new PointerType(new VoidType()), // meaningless
                                4);
         resetExpressionOffset();
-        compileStatement(def.body);
+        compileBlockStmt(new BlockStmt(def.body));
         assert(expressionOffset == 0);
 
         // return will handle putting the return value on the stack
@@ -207,17 +218,29 @@ public class MIPSCodeGenerator {
         final MIPSRegister t0 = MIPSRegister.T0;
         pop(t0);
 
-        // If it's false, make a jump.  If it's true, fall through to true branch.
-        // True branch needs to jump to after the false, which ends the if/else
-        final MIPSLabel falseStart = freshIfLabel("false_start");
-        final MIPSLabel falseEnd = freshIfLabel("false_end");
-        add(new Beq(t0, MIPSRegister.ZERO, falseStart));
+        if (stmt.ifFalse.isPresent()) {
+            // If it's false, make a jump.  If it's true, fall through to true branch.
+            // True branch needs to jump to after the false, which ends the if/else
+            final MIPSLabel falseStart = freshIfLabel("false_start");
+            final MIPSLabel falseEnd = freshIfLabel("false_end");
+            add(new Beq(t0, MIPSRegister.ZERO, falseStart));
 
-        compileStatementInNestedScope(false, stmt.ifTrue);
-        add(new J(falseEnd));
-        add(falseStart);
-        compileStatementInNestedScope(false, stmt.ifFalse);
-        add(falseEnd);
+            compileStatementInNestedScope(false, stmt.ifTrue);
+            add(new J(falseEnd));
+            add(falseStart);
+            compileStatementInNestedScope(false, stmt.ifFalse.get());
+            add(falseEnd);
+        } else {
+            // if there is no else:
+            //   guard
+            //   if (!true) jump to true_end;
+            //   ifTrue
+            // true_end:
+            final MIPSLabel trueEnd = freshIfLabel("true_end");
+            add(new Beq(t0, MIPSRegister.ZERO, trueEnd));
+            compileStatementInNestedScope(false, stmt.ifTrue);
+            add(trueEnd);
+        }
     }
 
     private void freeSizeForVariables(final int size) {
@@ -251,15 +274,26 @@ public class MIPSCodeGenerator {
                                sizeof(dec.type));
     }
 
-    public void compileSequenceStmt(final SequenceStmt stmt) {
-        compileStatement(stmt.first);
-        compileStatement(stmt.second);
+    public void compileBlockStmt(final BlockStmt stmt) {
+        final VariableTableResetPoint reset = variables.makeResetPoint();
+        for (final Stmt curStmt : stmt.stmts) {
+            compileStatement(curStmt);
+        }
+        freeSizeForVariables(variables.resetTo(reset));
     }
 
     public int variableOffset(final Variable variable) {
         return variables.variableOffset(variable) + expressionOffset;
     }
-    
+
+    // TODO: add support for address-of a LHS, address-of a function
+    // It might be worth removing support for address-of, because I realize
+    // this syntactically allows for things like:
+    // int x = 7;
+    // int** p = &&x;
+    //
+    // ...which is non-sensical.  This is also not caught by the current typechecker.
+    // As such, it's best to remove it.
     public void putLhsAddressIntoRegister(final MIPSRegister destination,
                                           final Lhs lhs) {
         if (lhs instanceof VariableLhs) {
@@ -334,16 +368,16 @@ public class MIPSCodeGenerator {
         printA0();
     }
 
-    public void compileReturnExpStmt(final ReturnExpStmt stmt) {
-        compileExpression(stmt.exp);
-        doReturn();
-        resetExpressionOffset();
-    }
-
-    public void compileReturnVoidStmt(final ReturnVoidStmt stmt) {
-        assert(expressionOffset == 0);
-        doReturn();
-        assert(expressionOffset == 0);
+    public void compileReturnStmt(final ReturnStmt stmt) {
+        if (stmt.exp.isPresent()) {
+            compileExpression(stmt.exp.get());
+            doReturn();
+            resetExpressionOffset();
+        } else {
+            assert(expressionOffset == 0);
+            doReturn();
+            assert(expressionOffset == 0);
+        }
     }
 
     public void compileWhileStmt(final WhileStmt stmt) {
@@ -396,16 +430,14 @@ public class MIPSCodeGenerator {
             compileVariableDeclarationInitializationStmt((VariableDeclarationInitializationStmt)stmt);
         } else if (stmt instanceof AssignmentStmt) {
             compileAssignmentStmt((AssignmentStmt)stmt);
-        } else if (stmt instanceof SequenceStmt) {
-            compileSequenceStmt((SequenceStmt)stmt);
+        } else if (stmt instanceof BlockStmt) {
+            compileBlockStmt((BlockStmt)stmt);
         } else if (stmt instanceof PrintStmt) {
             compilePrintStmt((PrintStmt)stmt);
-        } else if (stmt instanceof ReturnExpStmt) {
-            compileReturnExpStmt((ReturnExpStmt)stmt);
-        } else if (stmt instanceof ReturnVoidStmt) {
-            compileReturnVoidStmt((ReturnVoidStmt)stmt);
-        } else if (stmt instanceof FunctionCallStmt) {
-            compileFunctionCallStmt((FunctionCallStmt)stmt);
+        } else if (stmt instanceof ReturnStmt) {
+            compileReturnStmt((ReturnStmt)stmt);
+        } else if (stmt instanceof ExpStmt) {
+            compileExpStmt((ExpStmt)stmt);
         } else if (stmt instanceof IfStmt) {
             compileIfStmt((IfStmt)stmt);
         } else if (stmt instanceof WhileStmt) {
@@ -425,7 +457,8 @@ public class MIPSCodeGenerator {
             return 0;
         } else if (type instanceof IntType ||
                    type instanceof BoolType ||
-                   type instanceof PointerType) { // 32-bit word
+                   type instanceof PointerType ||
+                   type instanceof FunctionPointerType) { // 32-bit word
             return 4;
         } else if (type instanceof StructureType) {
             final LinkedHashMap<FieldName, Type> fields =
@@ -538,15 +571,15 @@ public class MIPSCodeGenerator {
 
         expressionOffset += loadSize;
     } // compileDereferenceExp
-    
-    public void compileMakeStructureExp(final MakeStructureExp exp) {
-        // each parameter is pushed onto the stack
-        // note that by evaluating left-to-right, this means that the
-        // _last_ value on the structure will appear on top of the stack
-        for (final Exp parameter : exp.parameters) {
-            compileExpression(parameter);
-        }
-    } // compileMakeStructureExp
+
+    // public void compileMakeStructureExp(final MakeStructureExp exp) {
+    //     // each parameter is pushed onto the stack
+    //     // note that by evaluating left-to-right, this means that the
+    //     // _last_ value on the structure will appear on top of the stack
+    //     for (final Exp parameter : exp.parameters) {
+    //         compileExpression(parameter);
+    //     }
+    // } // compileMakeStructureExp
 
     public List<Map.Entry<FieldName, Type>> reverseFieldsFor(final StructureName structName) {
         final LinkedHashMap<FieldName, Type> fields = structDecs.get(structName);
@@ -664,11 +697,47 @@ public class MIPSCodeGenerator {
     public static MIPSLabel functionNameToLabel(final FunctionName name) {
         return new MIPSLabel(name.name, 0);
     }
-    
-    // TODO: this does not conform to the typical MIPS calling convention;
-    // it puts all arguments on the stack, and returns on the stack, ignoring
+
+    public void compileExpStmt(final ExpStmt stmt) {
+        compileExpression(stmt.exp);
+        // ignore what's on the stack
+        final int returnTypeSize = sizeof(stmt.expType.get());
+        final MIPSRegister sp = MIPSRegister.SP;
+        add(new Addi(sp, sp, returnTypeSize));
+        expressionOffset -= returnTypeSize;
+        assert(expressionOffset >= 0);
+    }
+
+    // TODO: calls do not conform to the typical MIPS calling convention;
+    // we put all arguments on the stack, and return on the stack, ignoring
     // the $a* and $v* registers
-    public void compileFunctionCallExp(final FunctionCallExp exp) {
+    public void compileCallLikeExp(final CallLikeExp exp) {
+        final CallLikeResolved resolution = exp.resolution.get();
+        if (resolution instanceof DirectCallResolved) {
+            compileDirectCall(((DirectCallResolved)resolution).functionName,
+                              exp.params);
+        } else if (resolution instanceof IndirectCallResolved) {
+            compileIndirectCall(((IndirectCallResolved)resolution).functionPointer,
+                                exp.base,
+                                exp.params);
+        } else if (resolution instanceof MakeStructureResolved) {
+            compileMakeStructure(exp.params);
+        } else {
+            assert(false);
+        }
+    }
+
+    public void compileMakeStructure(final List<Exp> params) {
+        // each parameter is pushed onto the stack
+        // note that by evaluating left-to-right, this means that the
+        // _last_ value on the structure will appear on top of the stack
+        for (final Exp parameter : exp.parameters) {
+            compileExpression(parameter);
+        }
+    } // compileMakeStructureExp
+        
+    public void compileDirectCall(final FunctionName functionName,
+                                  final List<Exp> params) {
         final int originalExpressionOffset = expressionOffset;
 
         // last argument will be on top of the stack
@@ -676,23 +745,89 @@ public class MIPSCodeGenerator {
             compileExpression(parameter);
         }
 
-        add(new Jal(functionNameToLabel(exp.name)));
+        add(new Jal(functionNameToLabel(functionName)));
 
         // return value is on stack
         final int returnTypeSize = sizeof(functionDefs.get(exp.name).returnType);
         expressionOffset = originalExpressionOffset + returnTypeSize;
     }
 
-    public void compileFunctionCallStmt(final FunctionCallStmt stmt) {
-        final FunctionCallExp exp = stmt.asExp;
-        final int returnTypeSize = sizeof(functionDefs.get(exp.name).returnType);
-        compileFunctionCallExp(exp);
-        // ignore what's on the stack
+    public void compileIndirectCall(final FunctionPointerType functionType,
+                                    final Exp base,
+                                    final List<Exp> params) {
+        // problem: base has to be computed first, based on order of operations
+        // this means we need to save it on the stack
+        final int originalExpressionOffset = expressionOffset;
+        compileExpression(base);
+        assert(expressionOffset >= 4);
+        
+        for (final Exp parameter : exp.parameters) {
+            compileExpression(parameter);
+        }
+
+        // put base into a register
+        int offset = 0;
+        for (final Type paramType : functionType.paramTypes) {
+            offset += sizeof(paramType);
+        }
         final MIPSRegister sp = MIPSRegister.SP;
-        add(new Addi(sp, sp, returnTypeSize));
-        expressionOffset -= returnTypeSize;
-        assert(expressionOffset >= 0);
+        final MIPSRegister t0 = MIPSRegister.T0;
+        // stack:
+        // - paramN - low address ($sp)
+        // - ...
+        // - param1
+        // - param0
+        // - base
+        // - stack beforehand - high address
+        add(new Lw(t0, offset, sp));
+        add(new Jalr(t0));
+
+        // stack:
+        // - return value - low address ($sp)
+        // - base
+        // - stack beforehand - high address
+        //
+        // wanted stack:
+        // - return value - low address ($sp)
+        // - stack beforehand - high address
+        // 
+        // can shift everything down with a copy
+        final int returnTypeSize = sizeof(functionType.returnType);
+        for (int difference = returnTypeSize; difference > 0; difference -= 4) {
+            add(new Lw(t0, difference, sp));
+            add(new Sw(t0, difference + 4, sp));
+        }
+        add(new Addi(sp, sp, 4));
+
+        // return value is on stack
+        expressionOffset = originalExpressionOffset + returnTypeSize;
     }
+    
+    // public void compileFunctionCallExp(final FunctionCallExp exp) {
+    //     final int originalExpressionOffset = expressionOffset;
+
+    //     // last argument will be on top of the stack
+    //     for (final Exp parameter : exp.parameters) {
+    //         compileExpression(parameter);
+    //     }
+
+    //     add(new Jal(functionNameToLabel(exp.name)));
+
+    //     // return value is on stack
+    //     final int returnTypeSize = sizeof(functionDefs.get(exp.name).returnType);
+    //     expressionOffset = originalExpressionOffset + returnTypeSize;
+    // }
+
+    // public void compileFunctionCallStmt(final FunctionCallStmt stmt) {
+    //     final FunctionCallExp exp = stmt.asExp;
+    //     final int returnTypeSize = sizeof(functionDefs.get(exp.name).returnType);
+    //     compileFunctionCallExp(exp);
+    //     // ignore what's on the stack
+    //     final MIPSRegister sp = MIPSRegister.SP;
+    //     add(new Addi(sp, sp, returnTypeSize));
+    //     expressionOffset -= returnTypeSize;
+    //     assert(expressionOffset >= 0);
+    // }
     
     public void compileExpression(final Exp exp) {
         if (exp instanceof IntegerLiteralExp) {
@@ -713,10 +848,8 @@ public class MIPSCodeGenerator {
             compileDereferenceExp((DereferenceExp)exp);
         } else if (exp instanceof AddressOfExp) {
             compileAddressOfExp((AddressOfExp)exp);
-        } else if (exp instanceof MakeStructureExp) {
-            compileMakeStructureExp((MakeStructureExp)exp);
-        } else if (exp instanceof FunctionCallExp) {
-            compileFunctionCallExp((FunctionCallExp)exp);
+        } else if (exp instanceof CallLikeExp) {
+            compileCallLikeExp((CallLikeExp)exp);
         } else if (exp instanceof FieldAccessExp) {
             compileFieldAccessExp((FieldAccessExp)exp);
         } else {

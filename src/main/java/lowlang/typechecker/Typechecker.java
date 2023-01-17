@@ -55,6 +55,7 @@ public class Typechecker {
     }
     
     // not permitted to have multiple functions with the same name
+    // not permitted to have a function with the same name as a struct
     private Map<FunctionName, Pair<List<Type>, Type>>
         makeFunctionMapping(final List<FunctionDefinition> functions) throws TypeErrorException {
 
@@ -62,14 +63,16 @@ public class Typechecker {
             new HashMap<FunctionName, Pair<List<Type>, Type>>();
 
         for (final FunctionDefinition def : functions) {
+            if (result.containsKey(def.name)) {
+                throw new TypeErrorException("Duplicate function name: " + def.name.toString());
+            }
+            if (structDecs.containsKey(new StructureName(dec.name.name))) {
+                throw new TypeErrorException("Function name with same name as structure: " + def.name.toString());
+            }
             final List<Type> parameters = parameterTypes(def.parameters);
             final Pair<List<Type>, Type> value =
                 new Pair<List<Type>, Type>(parameters, def.returnType);
             result.put(def.name, value);
-        }
-
-        if (result.size() != functions.size()) {
-            throw new TypeErrorException("Duplicate function name");
         }
 
         return result;
@@ -113,13 +116,12 @@ public class Typechecker {
             new HashMap<StructureName, LinkedHashMap<FieldName, Type>>();
 
         for (final StructureDeclaration dec : structDecs) {
+            if (result.containsKey(dec.name)) {
+                throw new TypeErrorException("Duplicate structure name: " + dec.name.toString());
+            }
             final LinkedHashMap<FieldName, Type> fieldMapping =
                 makeFieldMapping(dec.fields);
             result.put(dec.name, fieldMapping);
-        }
-
-        if (result.size() != structDecs.size()) {
-            throw new TypeErrorException("Duplicate structure name");
         }
 
         return result;
@@ -149,7 +151,7 @@ public class Typechecker {
         final InScope initialScope = new InScope(fdef.returnType,
                                                  initialVariableMapping(fdef.parameters),
                                                  false);
-        final Pair<InScope, Boolean> stmtResult = initialScope.typecheckStmt(fdef.body);
+        final Pair<InScope, Boolean> stmtResult = initialScope.typecheckStmts(fdef.body);
 
         if (!stmtResult.second.booleanValue() &&
             !(fdef.returnType instanceof VoidType)) {
@@ -172,32 +174,6 @@ public class Typechecker {
         return result;
     }
     
-    private void checkMakeStructure(final StructureName name,
-                                    final List<Type> parameterTypes) throws TypeErrorException {
-        final LinkedHashMap<FieldName, Type> expected = structDecs.get(name);
-
-        if (expected != null) {
-            ensureTypesSame(expected.values().iterator(),
-                            parameterTypes.iterator());
-        } else {
-            throw new TypeErrorException("No such structure defined: " + name.toString());
-        }
-    }
-
-    // returns the return type
-    private Type checkFunctionCall(final FunctionName name,
-                                   final List<Type> parameterTypes) throws TypeErrorException {
-        final Pair<List<Type>, Type> expected = functionDefs.get(name);
-
-        if (expected != null) {
-            ensureTypesSame(expected.first.iterator(),
-                            parameterTypes.iterator());
-            return expected.second;
-        } else {
-            throw new TypeErrorException("No such function defined: " + name.toString());
-        }
-    } // checkFunctionCall
-
     private static void ensureTypesSame(final Iterator<Type> expectedTypes,
                                         final Iterator<Type> receivedTypes) throws TypeErrorException {
         while (expectedTypes.hasNext() &&
@@ -335,6 +311,28 @@ public class Typechecker {
                                              maybePointerType.toString());
             }
         }
+
+        // used if we are trying to get the address of lhs
+        private Pair<AddressOfResolved, Type> resolveAddressOf(final Lhs lhs) throws TypeErrorException {
+            if (lhs instanceof VariableLhs) {
+                final Variable variable = ((VariableLhs)lhs).variable;
+                final Type variableType = inScope.get(variable);
+                if (variableType != null) {
+                    return new Pair<AddressOfResolved, Type>(new DataResolved(), new PointerType(variableType));
+                } else {
+                    final FunctionName functionName = new FunctionName(variable.name);
+                    final Pair<List<Type>, Type> signature = functionDefs.get(functionName);
+                    if (signature != null) {
+                        return new Pair<AddressOfResolved, Type>(new FunctionResolved(functionName),
+                                                                 new FunctionPointerType(signature.first, signature.second));
+                    } else {
+                        throw new TypeErrorException("Getting address of non-variable or function: " + variable.toString());
+                    }
+                }
+            } else {
+                return new Pair<AddressOfResolved, Type>(new DataResolved(), new PointerType(typeofLhs(lhs)));
+            }
+        }
         
         private Type typeofLhs(final Lhs lhs) throws TypeErrorException {
             if (lhs instanceof VariableLhs) {
@@ -347,9 +345,14 @@ public class Typechecker {
                 return retval;
             } else if (lhs instanceof DereferenceLhs) {
                 return typeofDereferenceLhs((DereferenceLhs)lhs);
+            } else if (lhs instanceof AddressOfLhs) {
+                final AddressOfLhs asAddress = (AddressOfLhs)lhs;
+                final Pair<AddressOfResolved, Type> resolved = resolveAddressOf(asAddress.lhs);
+                asAddress.resolved = Optional.of(resolved.first);
+                return resolved.second;
             } else {
                 assert(false);
-                throw new TypeErrorException("Unknown lhs: " +lhs.toString());
+                throw new TypeErrorException("Unknown lhs: " + lhs.toString());
             }
         }
                     
@@ -371,6 +374,65 @@ public class Typechecker {
             return varType;
         }
 
+        public Type asIndirectFunctionCall(final CallLikeExp exp,
+                                           final List<Type> paramTypes) throws TypeErrorException {
+            final Type baseType = typeofExp(exp.base);
+            if (baseType instanceof FunctionPointerType) {
+                final FunctionPointerType fp = (FunctionPointerType)baseType;
+                ensureTypesSame(fp.paramTypes.iterator(),
+                                paramTypes.iterator());
+                exp.resolution = new IndirectCallResolved(fp);
+                return fp.returnType;
+            } else {
+                throw new TypeErrorException("Expected function pointer; received: " + baseType.toString());
+            }
+        }
+
+        // Local variables shadow function and structure names.  Earlier code
+        // forces there to be no overlap between function and structure names.
+        //
+        // Three possibilities:
+        // 1.) Calling a function directly.  Base will be a variable that
+        //     is NOT in scope, but it will be in the function definitions.
+        // 2.) Creating a struct.  Base will be a variable that is NOT in
+        //     scope, but it will be in the struct definitions.
+        // 3.) Calling a function indirectly.  Base will be a function
+        //     pointer type.  Base might be a variable.
+        public Type callLikeExpType(final CallLikeExp exp) throws TypeErrorException {
+            final List<Type> paramTypes = typeofExps(exp.params);
+            if (exp instanceof VariableExp) {
+                final Variable variable = ((VariableExp)exp).variable;
+                if (inScope.containsKey(variable)) {
+                    // Case #3: variable in scope, must be indirect call.
+                    return asIndirectFunctionCall(exp, paramTypes);
+                } else {
+                    // See if it's a function
+                    final FunctionName functionName = new FunctionName(variable.name);
+                    final Pair<List<Type>, Type> functionSignature = functionDefs.get(functionName);
+                    if (functionSignature != null) {
+                        ensureTypesSame(functionSignature.first.iterator(),
+                                        paramTypes.iterator());
+                        exp.resolution = Optional.of(new DirectCallResolved(functionName));
+                        return functionSignature.second;
+                    } else {
+                        // See if it's a structure.
+                        final StructureName structureName = new StructureName(variable.name);
+                        final LinkedHashMap<FieldName, Type> structSignature = structDecs.get(structureName);
+                        if (structSignature != null) {
+                            ensureTypesSame(structSignature.values().iterator(),
+                                            paramTypes.iterator());
+                            exp.resolution = Optional.of(new MakeStructureResolved(structureName));
+                            return new StructureType(structureName);
+                        } else {
+                            throw new TypeErrorException("No such variable, function, or structure name: " + variable.toString());
+                        }
+                    }
+                }
+            } else { // if base is a variable
+                return asIndirectFunctionCall(exp, paramTypes);
+            }
+        } // callLikeExpType
+        
         public Type typeofExp(final Exp exp) throws TypeErrorException {
             if (exp instanceof IntegerLiteralExp) {
                 return new IntType();
@@ -397,15 +459,8 @@ public class Typechecker {
                 final Type leftType = typeofExp(asBinop.left);
                 final Type rightType = typeofExp(asBinop.right);
                 return binopType(leftType, asBinop.op, rightType);
-            } else if (exp instanceof MakeStructureExp) {
-                final MakeStructureExp asStruct = (MakeStructureExp)exp;
-                checkMakeStructure(asStruct.name,
-                                   typeofExps(asStruct.parameters));
-                return new StructureType(asStruct.name);
-            } else if (exp instanceof FunctionCallExp) {
-                final FunctionCallExp asCall = (FunctionCallExp)exp;
-                return checkFunctionCall(asCall.name,
-                                         typeofExps(asCall.parameters));
+            } else if (exp instanceof CallLikeExp) {
+                return callLikeExpType((CallLikeExp)exp);
             } else if (exp instanceof CastExp) {
                 // Explicit cast.  Trust the user.  Ideally, we'd check
                 // this at runtime.  We still need to look at the expression
@@ -414,9 +469,10 @@ public class Typechecker {
                 typeofExp(asCast.exp);
                 return asCast.type;
             } else if (exp instanceof AddressOfExp) {
-                final Type nested = typeofLhs(((AddressOfExp)exp).lhs);
-                // point to this now
-                return new PointerType(nested);
+                final AddressOfExp asAddress = (AddressOfExp)exp;
+                final Pair<AddressOfResolved, Type> resolved = resolveAddressOf(exp.lhs);
+                asAddress.resolved = Optional.of(resolved.first);
+                return resolved.second;
             } else if (exp instanceof DereferenceExp) {
                 return typeofDereferenceExp((DereferenceExp)exp);
             } else if (exp instanceof FieldAccessExp) {
@@ -431,6 +487,21 @@ public class Typechecker {
             }
         } // typeofExp
 
+        // threads the same scope along
+        public Pair<InScope, Boolean> typecheckStmts(final List<Stmt> stmts) throws TypeErrorException {
+            InScope curScope = this;
+            boolean returned = false;
+            for (final Stmt stmt : stmts) {
+                if (returned) {
+                    throw new TypeErrorException("Dead code from early return");
+                }
+                final Pair<InScope, Boolean> current = curScope.typecheckStmt(stmt);
+                returned = current.second.booleanValue();
+                curScope = current.first;
+            }
+            return new Pair<InScope, Boolean>(curScope, Boolean.valueOf(returned));
+        }
+        
         // returns any new scope to use, along with whether or not return was observed on
         // all paths
         public Pair<InScope, Boolean> typecheckStmt(final Stmt stmt) throws TypeErrorException {
@@ -441,10 +512,14 @@ public class Typechecker {
                 // since the true and false branches form their own blocks, we
                 // don't care about any variables they put in scope
                 final Pair<InScope, Boolean> leftResult = typecheckStmt(asIf.ifTrue);
-                final Pair<InScope, Boolean> rightResult = typecheckStmt(asIf.ifFalse);
-                final boolean returnOnBoth =
-                    leftResult.second.booleanValue() && rightResult.second.booleanValue();
-                return new Pair<InScope, Boolean>(this, returnOnBoth);
+                if (asIf.ifFalse.isPresent()) {
+                    final Pair<InScope, Boolean> rightResult = typecheckStmt(asIf.ifFalse.get());
+                    final boolean returnOnBoth =
+                        leftResult.second.booleanValue() && rightResult.second.booleanValue();
+                    return new Pair<InScope, Boolean>(this, Boolean.valueOf(returnOnBoth));
+                } else {
+                    return new Pair<InScope, Boolean>(this, Boolean.valueOf(false));
+                }
             } else if (stmt instanceof WhileStmt) {
                 final WhileStmt asWhile = (WhileStmt)stmt;
                 ensureTypesSame(new BoolType(), typeofExp(asWhile.guard));
@@ -477,26 +552,21 @@ public class Typechecker {
                 ensureTypesSame(typeofLhs(asAssign.lhs),
                                 typeofExp(asAssign.exp));
                 return new Pair<InScope, Boolean>(this, Boolean.valueOf(false));
-            } else if (stmt instanceof ReturnVoidStmt) {
-                ensureTypesSame(new VoidType(), returnType);
-                return new Pair<InScope, Boolean>(this, Boolean.valueOf(true));
-            } else if (stmt instanceof ReturnExpStmt) {
-                final Type receivedType = typeofExp(((ReturnExpStmt)stmt).exp);
-                ensureTypesSame(returnType, receivedType);
-                return new Pair<InScope, Boolean>(this, Boolean.valueOf(true));
-            } else if (stmt instanceof SequenceStmt) {
-                final SequenceStmt asSeq = (SequenceStmt)stmt;
-                final Pair<InScope, Boolean> fromLeft = typecheckStmt(asSeq.first);
-                
-                if (fromLeft.second.booleanValue()) {
-                    throw new TypeErrorException("Dead code from early return");
+            } else if (stmt instanceof ReturnStmt) {
+                final Optional<Exp> exp = ((ReturnStmt)stmt).exp;
+                if (exp.isPresent()) {
+                    ensureTypesSame(returnType, typeofExp(exp.get()));
+                } else {
+                    ensureTypesSame(new VoidType(), returnType);
                 }
-
-                return fromLeft.first.typecheckStmt(asSeq.second);
+                return new Pair<InScope, Boolean>(this, Boolean.valueOf(true));
+            } else if (stmt instanceof BlockStmt) {
+                final boolean returns = typecheckStmts(((BlockStmt)stmt).stmts).second;
+                return new Pair<InScope, Boolean>(this, Boolean.valueOf(returns));
             } else if (stmt instanceof ExpStmt) {
-                // Just need to check that it's well-typed.  Permitted to
-                // return anything.
-                typeofExp(((ExpStmt)stmt).exp);
+                final ExpStmt asExp = (ExpStmt)stmt;
+                final Type type = typeofExp(asExp.exp);
+                asExp.expType = Optional.of(type);
                 return new Pair<InScope, Boolean>(this, Boolean.valueOf(false));
             } else if (stmt instanceof PrintStmt) {
                 final PrintStmt asPrint = (PrintStmt)stmt;
