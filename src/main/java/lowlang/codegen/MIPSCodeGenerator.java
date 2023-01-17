@@ -162,7 +162,7 @@ public class MIPSCodeGenerator {
 
         // call into the user's main and then exit
         add(functionNameToLabel(REAL_MAIN));
-        compileFunctionCallExp(new FunctionCallExp(def.name, new ArrayList<Exp>()));
+        compileDirectCall(def.name, new ArrayList<Exp>());
         mainEnd();
         
         compileFunctionDefinition(def);
@@ -286,14 +286,6 @@ public class MIPSCodeGenerator {
         return variables.variableOffset(variable) + expressionOffset;
     }
 
-    // TODO: add support for address-of a LHS, address-of a function
-    // It might be worth removing support for address-of, because I realize
-    // this syntactically allows for things like:
-    // int x = 7;
-    // int** p = &&x;
-    //
-    // ...which is non-sensical.  This is also not caught by the current typechecker.
-    // As such, it's best to remove it.
     public void putLhsAddressIntoRegister(final MIPSRegister destination,
                                           final Lhs lhs) {
         if (lhs instanceof VariableLhs) {
@@ -689,8 +681,14 @@ public class MIPSCodeGenerator {
     }
 
     public void compileAddressOfExp(final AddressOfExp exp) {
+        final AddressOfResolved resolution = exp.resolved.get();
         final MIPSRegister t0 = MIPSRegister.T0;
-        putLhsAddressIntoRegister(t0, exp.lhs);
+        if (resolution instanceof DataResolved) {
+            putLhsAddressIntoRegister(t0, exp.lhs);
+        } else if (resolution instanceof FunctionResolved) {
+            final FunctionName functionName = ((FunctionResolved)resolution).functionName;
+            add(new La(t0, functionNameToLabel(functionName)));
+        }
         push(t0);
     }
 
@@ -731,8 +729,8 @@ public class MIPSCodeGenerator {
         // each parameter is pushed onto the stack
         // note that by evaluating left-to-right, this means that the
         // _last_ value on the structure will appear on top of the stack
-        for (final Exp parameter : exp.parameters) {
-            compileExpression(parameter);
+        for (final Exp exp : params) {
+            compileExpression(exp);
         }
     } // compileMakeStructureExp
         
@@ -741,14 +739,14 @@ public class MIPSCodeGenerator {
         final int originalExpressionOffset = expressionOffset;
 
         // last argument will be on top of the stack
-        for (final Exp parameter : exp.parameters) {
+        for (final Exp parameter : params) {
             compileExpression(parameter);
         }
 
         add(new Jal(functionNameToLabel(functionName)));
 
         // return value is on stack
-        final int returnTypeSize = sizeof(functionDefs.get(exp.name).returnType);
+        final int returnTypeSize = sizeof(functionDefs.get(functionName).returnType);
         expressionOffset = originalExpressionOffset + returnTypeSize;
     }
 
@@ -761,7 +759,7 @@ public class MIPSCodeGenerator {
         compileExpression(base);
         assert(expressionOffset >= 4);
         
-        for (final Exp parameter : exp.parameters) {
+        for (final Exp parameter : params) {
             compileExpression(parameter);
         }
 

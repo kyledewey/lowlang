@@ -6,12 +6,12 @@ public class FunctionDefinition {
     public final Type returnType;
     public final FunctionName name;
     public final List<VariableDeclaration> parameters;
-    public final Stmt body;
+    public final List<Stmt> body;
 
     public FunctionDefinition(final Type returnType,
                               final FunctionName name,
                               final List<VariableDeclaration> parameters,
-                              final Stmt body) {
+                              final List<Stmt> body) {
         this.returnType = returnType;
         this.name = name;
         this.parameters = parameters;

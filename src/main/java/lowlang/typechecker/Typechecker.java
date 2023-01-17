@@ -66,7 +66,7 @@ public class Typechecker {
             if (result.containsKey(def.name)) {
                 throw new TypeErrorException("Duplicate function name: " + def.name.toString());
             }
-            if (structDecs.containsKey(new StructureName(dec.name.name))) {
+            if (structDecs.containsKey(new StructureName(def.name.name))) {
                 throw new TypeErrorException("Function name with same name as structure: " + def.name.toString());
             }
             final List<Type> parameters = parameterTypes(def.parameters);
@@ -345,11 +345,6 @@ public class Typechecker {
                 return retval;
             } else if (lhs instanceof DereferenceLhs) {
                 return typeofDereferenceLhs((DereferenceLhs)lhs);
-            } else if (lhs instanceof AddressOfLhs) {
-                final AddressOfLhs asAddress = (AddressOfLhs)lhs;
-                final Pair<AddressOfResolved, Type> resolved = resolveAddressOf(asAddress.lhs);
-                asAddress.resolved = Optional.of(resolved.first);
-                return resolved.second;
             } else {
                 assert(false);
                 throw new TypeErrorException("Unknown lhs: " + lhs.toString());
@@ -381,7 +376,7 @@ public class Typechecker {
                 final FunctionPointerType fp = (FunctionPointerType)baseType;
                 ensureTypesSame(fp.paramTypes.iterator(),
                                 paramTypes.iterator());
-                exp.resolution = new IndirectCallResolved(fp);
+                exp.resolution = Optional.of(new IndirectCallResolved(fp));
                 return fp.returnType;
             } else {
                 throw new TypeErrorException("Expected function pointer; received: " + baseType.toString());
@@ -400,8 +395,8 @@ public class Typechecker {
         //     pointer type.  Base might be a variable.
         public Type callLikeExpType(final CallLikeExp exp) throws TypeErrorException {
             final List<Type> paramTypes = typeofExps(exp.params);
-            if (exp instanceof VariableExp) {
-                final Variable variable = ((VariableExp)exp).variable;
+            if (exp.base instanceof VariableExp) {
+                final Variable variable = ((VariableExp)exp.base).variable;
                 if (inScope.containsKey(variable)) {
                     // Case #3: variable in scope, must be indirect call.
                     return asIndirectFunctionCall(exp, paramTypes);
@@ -470,7 +465,7 @@ public class Typechecker {
                 return asCast.type;
             } else if (exp instanceof AddressOfExp) {
                 final AddressOfExp asAddress = (AddressOfExp)exp;
-                final Pair<AddressOfResolved, Type> resolved = resolveAddressOf(exp.lhs);
+                final Pair<AddressOfResolved, Type> resolved = resolveAddressOf(asAddress.lhs);
                 asAddress.resolved = Optional.of(resolved.first);
                 return resolved.second;
             } else if (exp instanceof DereferenceExp) {

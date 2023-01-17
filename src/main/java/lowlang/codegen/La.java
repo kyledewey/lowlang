@@ -10,6 +10,11 @@ public class La implements MIPSInstruction {
         this.label = label;
     }
 
+    public La(final MIPSRegister rd,
+              final MIPSLabel label) {
+        this(rd, label.getName());
+    }
+    
     public String toString() {
         return (MIPSInstruction.INDENT + "la " +
                 rd.toString() + ", " +

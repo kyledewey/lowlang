@@ -83,17 +83,18 @@ primaryType ::= `int` | `void` | `bool` | id | `(` type `)`
 pointerType ::= primaryType (`*`)*
 functionType ::= (`(` types `)` `=>`)* pointerType
 type ::= functionType
-primaryLhs ::= id | `(` lhs `)`
+primaryLhs ::= id
 accessLhs ::= primaryLhs (`.` id)*
-starLhs ::= (`*` | `&`)* accessLhs
+starLhs ::= (`*`)* accessLhs
 lhs ::= starLhs
 exps ::= [exp (`,` exp)*]
 primaryExp ::= i | `true` | `false` | id | `(` exp `)` |
                `sizeof` `(` type `)` |
-               `malloc` `(` exp `)`
+               `malloc` `(` exp `)` |
+               `&` lhs
 dotOrCall ::= `.` id | `(` exps `)`
 dotOrCallExp::= primaryExp dotOrCall*
-castOrMemItem ::= `(` type `)` | `*` | `&`
+castOrMemItem ::= `(` type `)` | `*`
 castOrMemExp ::= castOrMemItem* dotOrCallExp
 multExp ::= castOrMemExp ((`*` | `/`) castOrMemExp)*
 addExp ::= multExp ((`+` | `-`) multExp)*

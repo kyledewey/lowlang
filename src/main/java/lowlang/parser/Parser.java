@@ -4,6 +4,8 @@ import lowlang.tokenizer.*;
 
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Optional;
 
 public class Parser {
     public final Token[] tokens;
@@ -88,7 +90,7 @@ public class Parser {
                 assertTokenHereIs(position, new StarToken());
                 numStars++;
                 position++;
-            } catch (final ParseExcepiton e) {
+            } catch (final ParseException e) {
                 shouldRun = false;
             }
         }
@@ -121,7 +123,7 @@ public class Parser {
         Collections.reverse(params);
         Type retval = rest.result;
         for (final List<Type> curParams : params) {
-            retval = new FunctionType(curParams, retval);
+            retval = new FunctionPointerType(curParams, retval);
         }
         return new ParseResult<Type>(retval, rest.nextPosition);
     } // parseFunctionType
@@ -132,13 +134,9 @@ public class Parser {
 
     public ParseResult<Lhs> parsePrimaryLhs(final int position) throws ParseException {
         final Token token = getToken(position);
-        if (token instanceof IdentfierToken) {
+        if (token instanceof IdentifierToken) {
             return new ParseResult<Lhs>(new VariableLhs(new Variable(((IdentifierToken)token).name)),
                                         position + 1);
-        } else if (token instanceof LeftParenToken) {
-            final ParseResult<Lhs> lhs = parseLhs(position + 1);
-            assertTokenHereIs(lhs.nextPosition, new RightParenToken());
-            return new ParseResult<Lhs>(lhs.result, lhs.nextPosition + 1);
         } else {
             throw new ParseException("Expected lhs; received: " + token.toString());
         }
@@ -168,17 +166,16 @@ public class Parser {
     } // parseAccessLhs
 
     public ParseResult<Lhs> parseStarLhs(int position) throws ParseException {
-        final List<Token> starOrAddressOf = new ArrayList<Token>();
+        int numStars = 0;
         boolean shouldRun = true;
         while (shouldRun) {
             try {
                 final Token token = getToken(position);
-                if (token instanceof StarToken ||
-                    token instanceof SingleAndToken) {
-                    starOrAddressOf.add(token);
+                if (token instanceof StarToken) {
+                    numStars++;
                     position++;
                 } else {
-                    throw new ParseException("Needed * or &; got: " + token.toString());
+                    throw new ParseException("Needed *; received: " + token.toString());
                 }
             } catch (final ParseException e) {
                 shouldRun = false;
@@ -186,17 +183,10 @@ public class Parser {
         }
 
         final ParseResult<Lhs> rest = parseAccessLhs(position);
-        Collections.reverse(starOrAddressOf);
         Lhs retval = rest.result;
-        for (final Token token : starOrAddressOf) {
-            if (token instanceof StarToken) {
-                retval = new DereferenceLhs(retval);
-            } else if (token instanceof SingleAndToken) {
-                retval = new AddressOfLhs(retval);
-            } else {
-                assert(false);
-                throw new ParseException("Internal error; expected * or &; got: " + token.toString());
-            }
+        while (numStars > 0) {
+            retval = new DereferenceLhs(retval);
+            numStars--;
         }
         return new ParseResult<Lhs>(retval, rest.nextPosition);
     } // parseStarLhs
@@ -230,7 +220,7 @@ public class Parser {
     public ParseResult<Exp> parsePrimaryExp(final int position) throws ParseException {
         final Token token = getToken(position);
         if (token instanceof IntLiteralToken) {
-            return new ParseResult<Exp>(new IntLiteralExp(((IntLiteralToken)token).value), position + 1);
+            return new ParseResult<Exp>(new IntegerLiteralExp(((IntLiteralToken)token).value), position + 1);
         } else if (token instanceof TrueToken) {
             return new ParseResult<Exp>(new BooleanLiteralExp(true), position + 1);
         } else if (token instanceof FalseToken) {
@@ -251,6 +241,9 @@ public class Parser {
             final ParseResult<Exp> exp = parseExp(position + 2);
             assertTokenHereIs(exp.nextPosition, new RightParenToken());
             return new ParseResult<Exp>(new MallocExp(exp.result), exp.nextPosition + 1);
+        } else if (token instanceof SingleAndToken) {
+            final ParseResult<Lhs> lhs = parseLhs(position + 1);
+            return new ParseResult<Exp>(new AddressOfExp(lhs.result), lhs.nextPosition);
         } else {
             throw new ParseException("Expected primary expression; received: " + token.toString());
         }
@@ -301,10 +294,8 @@ public class Parser {
             return new ParseResult<CastOrMemItem>(new Cast(type.result), type.nextPosition + 1);
         } else if (token instanceof StarToken) {
             return new ParseResult<CastOrMemItem>(new StarMemItem(), position + 1);
-        } else if (token instanceof SingleAndToken) {
-            return new ParseResult<CastOrMemItem>(new AddressOfItem(), position + 1);
         } else {
-            throw new ParseException("Expected cast, *, or &; received: " + token.toString());
+            throw new ParseException("Expected cast or *; received: " + token.toString());
         }
     } // parseCastOrMemItem
 
@@ -448,7 +439,7 @@ public class Parser {
         boolean shouldRun = true;
         while (shouldRun) {
             try {
-                final List<Stmt> stmt = parseStmt(position);
+                final ParseResult<Stmt> stmt = parseStmt(position);
                 stmts.add(stmt.result);
                 position = stmt.nextPosition;
             } catch (final ParseException e) {
@@ -470,7 +461,7 @@ public class Parser {
             return new ParseResult<Stmt>(new VariableDeclarationInitializationStmt(vardec.result,
                                                                                    exp.result),
                                          exp.nextPosition + 1);
-        } catch (final ParseResult e1) {
+        } catch (final ParseException e1) {
             try {
                 final ParseResult<Lhs> lhs = parseLhs(position);
                 assertTokenHereIs(lhs.nextPosition, new SingleEqualsToken());
@@ -550,7 +541,7 @@ public class Parser {
         assertTokenHereIs(name.nextPosition, new LeftCurlyBraceToken());
         final List<VariableDeclaration> contents = new ArrayList<VariableDeclaration>();
         boolean shouldRun = true;
-        position = next.nextPosition + 1;
+        position = name.nextPosition + 1;
         while (shouldRun) {
             try {
                 final ParseResult<VariableDeclaration> vardec = parseVardec(position);
@@ -616,7 +607,7 @@ public class Parser {
         return new ParseResult<FunctionDefinition>(new FunctionDefinition(type.result,
                                                                           new FunctionName(name.result),
                                                                           params.result,
-                                                                          new BlockStmt(bodyStmts.result)),
+                                                                          bodyStmts.result),
                                                    bodyStmts.nextPosition + 1);
     } // parseFunction
 
