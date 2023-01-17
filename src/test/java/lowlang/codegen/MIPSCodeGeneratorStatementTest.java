@@ -54,13 +54,7 @@ public class MIPSCodeGeneratorStatementTest extends MIPSCodeGeneratorTestBase<St
     }
 
     public static Stmt stmts(final Stmt... stmts) {
-        assert(stmts.length > 0);
-        Stmt result = stmts[stmts.length - 1];
-
-        for (int index = stmts.length - 2; index >= 0; index--) {
-            result = new SequenceStmt(stmts[index], result);
-        }
-        return result;
+        return new BlockStmt(Arrays.asList(stmts));
     }
 
     public static PrintStmt printVar(final String varName) {
@@ -328,6 +322,12 @@ public class MIPSCodeGeneratorStatementTest extends MIPSCodeGeneratorTestBase<St
                      DOUBLE_TWO_INTS);
     }
 
+    public static AddressOfExp addressOfData(final Lhs lhs) {
+        final AddressOfExp retval = new AddressOfExp(lhs);
+        retval.resolved = Optional.of(new DataResolved());
+        return retval;
+    }
+    
     @Test
     public void testAssignIntThroughPointer() throws IOException {
         // int x = 5;
@@ -344,7 +344,7 @@ public class MIPSCodeGeneratorStatementTest extends MIPSCodeGeneratorTestBase<St
                                   new IntegerLiteralExp(5)),
                            vardec("p",
                                   new PointerType(new IntType()),
-                                  new AddressOfExp(new VariableLhs(new Variable("x")))),
+                                  addressOfData(new VariableLhs(new Variable("x")))),
                            assign(deref,
                                   new IntegerLiteralExp(7)),
                            printVar("x")));
@@ -375,7 +375,7 @@ public class MIPSCodeGeneratorStatementTest extends MIPSCodeGeneratorTestBase<St
                                                                      new IntegerLiteralExp(2)))),
                            vardec("p",
                                   new PointerType(new IntType()),
-                                  new AddressOfExp(accessLhs)),
+                                  addressOfData(accessLhs)),
                            assign(deref,
                                   new IntegerLiteralExp(3)),
                            new PrintStmt(accessExp)),
@@ -407,7 +407,7 @@ public class MIPSCodeGeneratorStatementTest extends MIPSCodeGeneratorTestBase<St
                                                                      new IntegerLiteralExp(2)))),
                            vardec("p",
                                   new PointerType(new IntType()),
-                                  new AddressOfExp(accessLhs)),
+                                  addressOfData(accessLhs)),
                            assign(deref,
                                   new IntegerLiteralExp(3)),
                            new PrintStmt(accessExp)),
@@ -436,7 +436,7 @@ public class MIPSCodeGeneratorStatementTest extends MIPSCodeGeneratorTestBase<St
                                                                      new IntegerLiteralExp(2)))),
                            vardec("p",
                                   new PointerType(new StructureType(structName)),
-                                  new AddressOfExp(new VariableLhs(new Variable("x")))),
+                                  addressOfData(new VariableLhs(new Variable("x")))),
                            assign(deref,
                                   new MakeStructureExp(structName,
                                                        Arrays.asList(new IntegerLiteralExp(3),
@@ -478,7 +478,7 @@ public class MIPSCodeGeneratorStatementTest extends MIPSCodeGeneratorTestBase<St
                                                                                                         new IntegerLiteralExp(4)))))),
                            vardec("p",
                                   new PointerType(new StructureType(twoInts)),
-                                  new AddressOfExp(accessFirstLhs)),
+                                  addressOfData(accessFirstLhs)),
                            assign(deref,
                                   new MakeStructureExp(twoInts,
                                                        Arrays.asList(new IntegerLiteralExp(5),
@@ -520,7 +520,7 @@ public class MIPSCodeGeneratorStatementTest extends MIPSCodeGeneratorTestBase<St
                                                                                                         new IntegerLiteralExp(4)))))),
                            vardec("p",
                                   new PointerType(new StructureType(twoInts)),
-                                  new AddressOfExp(accessSecondLhs)),
+                                  addressOfData(accessSecondLhs)),
                            assign(deref,
                                   new MakeStructureExp(twoInts,
                                                        Arrays.asList(new IntegerLiteralExp(5),
@@ -545,7 +545,7 @@ public class MIPSCodeGeneratorStatementTest extends MIPSCodeGeneratorTestBase<St
                                   new IntegerLiteralExp(5)),
                            vardec("p",
                                   new PointerType(new IntType()),
-                                  new AddressOfExp(new VariableLhs(new Variable("x")))),
+                                  addressOfData(new VariableLhs(new Variable("x")))),
                            new PrintStmt(deref)));
     }
 
@@ -572,7 +572,7 @@ public class MIPSCodeGeneratorStatementTest extends MIPSCodeGeneratorTestBase<St
                                                                      new IntegerLiteralExp(2)))),
                            vardec("p",
                                   new PointerType(new StructureType(twoInts)),
-                                  new AddressOfExp(new VariableLhs(new Variable("x")))),
+                                  addressOfData(new VariableLhs(new Variable("x")))),
                            new PrintStmt(accessExp)),
                      TWO_INTS);
     }
@@ -588,7 +588,7 @@ public class MIPSCodeGeneratorStatementTest extends MIPSCodeGeneratorTestBase<St
         assertResult(1,
                      new IfStmt(new BooleanLiteralExp(true),
                                 new PrintStmt(new IntegerLiteralExp(1)),
-                                new PrintStmt(new IntegerLiteralExp(2))));
+                                Optional.of(new PrintStmt(new IntegerLiteralExp(2)))));
     }
 
     @Test
@@ -602,7 +602,7 @@ public class MIPSCodeGeneratorStatementTest extends MIPSCodeGeneratorTestBase<St
         assertResult(2,
                      new IfStmt(new BooleanLiteralExp(false),
                                 new PrintStmt(new IntegerLiteralExp(1)),
-                                new PrintStmt(new IntegerLiteralExp(2))));
+                                Optional.of(new PrintStmt(new IntegerLiteralExp(2)))));
     }
 
     // ---BEGIN CODE FOR NESTED IF TESTS---
@@ -615,13 +615,13 @@ public class MIPSCodeGeneratorStatementTest extends MIPSCodeGeneratorTestBase<St
     public static final IfStmt NESTED_IF =
         new IfStmt(lt(89),
                    new PrintStmt(new IntegerLiteralExp(1)),
-                   new IfStmt(lt(79),
-                              new PrintStmt(new IntegerLiteralExp(2)),
-                              new IfStmt(lt(69),
-                                         new PrintStmt(new IntegerLiteralExp(3)),
-                                         new IfStmt(lt(59),
-                                                    new PrintStmt(new IntegerLiteralExp(4)),
-                                                    new PrintStmt(new IntegerLiteralExp(5))))));
+                   Optional.of(new IfStmt(lt(79),
+                                          new PrintStmt(new IntegerLiteralExp(2)),
+                                          Optional.of(new IfStmt(lt(69),
+                                                                 new PrintStmt(new IntegerLiteralExp(3)),
+                                                                 Optional.of(new IfStmt(lt(59),
+                                                                                        new PrintStmt(new IntegerLiteralExp(4)),
+                                                                                        Optional.of(new PrintStmt(new IntegerLiteralExp(5))))))))));
 
     @Test
     public void testNestedIfFirst() throws IOException {
@@ -745,7 +745,7 @@ public class MIPSCodeGeneratorStatementTest extends MIPSCodeGeneratorTestBase<St
         assertResult(1,
                      new IfStmt(guard,
                                 new PrintStmt(new IntegerLiteralExp(1)),
-                                new PrintStmt(new IntegerLiteralExp(2))),
+                                Optional.of(new PrintStmt(new IntegerLiteralExp(2)))),
                      TWO_INTS);
     }
 
@@ -770,7 +770,7 @@ public class MIPSCodeGeneratorStatementTest extends MIPSCodeGeneratorTestBase<St
         assertResult(2,
                      new IfStmt(guard,
                                 new PrintStmt(new IntegerLiteralExp(1)),
-                                new PrintStmt(new IntegerLiteralExp(2))),
+                                Optional.of(new PrintStmt(new IntegerLiteralExp(2)))),
                      TWO_INTS);
     }
 
@@ -889,7 +889,7 @@ public class MIPSCodeGeneratorStatementTest extends MIPSCodeGeneratorTestBase<St
                                                                        new LessThanOp(),
                                                                        new VariableExp(x)),
                                                           new BreakStmt(),
-                                                          new ContinueStmt()))),
+                                                          Optional.of(new ContinueStmt())))),
                            printVar("x")));
     }
 
@@ -907,7 +907,7 @@ public class MIPSCodeGeneratorStatementTest extends MIPSCodeGeneratorTestBase<St
                      stmts(vardec("x", new IntType(), new IntegerLiteralExp(0)),
                            new IfStmt(new BooleanLiteralExp(true),
                                       vardec("x", new IntType(), new IntegerLiteralExp(1)),
-                                      vardec("x", new IntType(), new IntegerLiteralExp(2))),
+                                      Optional.of(vardec("x", new IntType(), new IntegerLiteralExp(2)))),
                            printVar("x")));
     }
 

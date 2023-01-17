@@ -61,13 +61,13 @@ public class MIPSCodeGeneratorFunctionTest extends MIPSCodeGeneratorTestBase<Fun
         return new FunctionDefinition(new VoidType(),
                                       new FunctionName("main"),
                                       new ArrayList<VariableDeclaration>(),
-                                      stmt);
+                                      Arrays.asList(stmt));
     }
     @Test
     public void testPrintConstantExplicitReturn() throws IOException {
         assertResultF(1,
                       mkMain(stmts(new PrintStmt(new IntegerLiteralExp(1)),
-                                   new ReturnVoidStmt())));
+                                   new ReturnStmt(Optional.empty()))));
     }
 
     @Test
@@ -76,6 +76,14 @@ public class MIPSCodeGeneratorFunctionTest extends MIPSCodeGeneratorTestBase<Fun
                       mkMain(new PrintStmt(new IntegerLiteralExp(1))));
     }
 
+    public static CallLikeExp directCall(final FunctionName functionName,
+                                         final List<Exp> params) {
+        final CallLikeExp retval = new CallLikeExp(new VariableExp(new Variable(functionName.name)),
+                                                   params);
+        retval.resolution = Optional.of(new DirectCallResolved(functionName));
+        return retval;
+    }
+    
     @Test
     public void testCallFunctionReturnsConstantInt() throws IOException {
         final FunctionName foo = new FunctionName("foo");
@@ -83,8 +91,8 @@ public class MIPSCodeGeneratorFunctionTest extends MIPSCodeGeneratorTestBase<Fun
                       new FunctionDefinition(new IntType(),
                                              foo,
                                              new ArrayList<VariableDeclaration>(),
-                                             new ReturnExpStmt(new IntegerLiteralExp(1))),
-                      mkMain(new PrintStmt(new FunctionCallExp(foo, new ArrayList<Exp>()))));
+                                             Arrays.asList(new ReturnStmt(Optional.of(new IntegerLiteralExp(1))))),
+                      mkMain(new PrintStmt(directCall(foo, new ArrayList<Exp>()))));
     }
 
     @Test
@@ -97,12 +105,12 @@ public class MIPSCodeGeneratorFunctionTest extends MIPSCodeGeneratorTestBase<Fun
                                              foo,
                                              Arrays.asList(new VariableDeclaration(new IntType(), x),
                                                            new VariableDeclaration(new IntType(), y)),
-                                             new ReturnExpStmt(new BinopExp(new VariableExp(x),
-                                                                            new PlusOp(),
-                                                                            new VariableExp(y)))),
-                      mkMain(new PrintStmt(new FunctionCallExp(foo,
-                                                               Arrays.asList(new IntegerLiteralExp(1),
-                                                                             new IntegerLiteralExp(2))))));
+                                             Arrays.asList(new ReturnStmt(Optional.of(new BinopExp(new VariableExp(x),
+                                                                                                   new PlusOp(),
+                                                                                                   new VariableExp(y)))))),
+                      mkMain(new PrintStmt(directCall(foo,
+                                                      Arrays.asList(new IntegerLiteralExp(1),
+                                                                    new IntegerLiteralExp(2))))));
     }
 
     @Test
@@ -116,7 +124,7 @@ public class MIPSCodeGeneratorFunctionTest extends MIPSCodeGeneratorTestBase<Fun
 
         final FunctionName foo = new FunctionName("foo");
         final StructureName twoInts = new StructureName("TwoInts");
-        final FieldAccessExp access = new FieldAccessExp(new FunctionCallExp(foo, new ArrayList<Exp>()),
+        final FieldAccessExp access = new FieldAccessExp(directCall(foo, new ArrayList<Exp>()),
                                                          new FieldName("x"));
         access.expStructure = Optional.of(twoInts);
         
@@ -125,9 +133,9 @@ public class MIPSCodeGeneratorFunctionTest extends MIPSCodeGeneratorTestBase<Fun
                       new FunctionDefinition(new StructureType(twoInts),
                                              foo,
                                              new ArrayList<VariableDeclaration>(),
-                                             new ReturnExpStmt(new MakeStructureExp(twoInts,
-                                                                                    Arrays.asList(new IntegerLiteralExp(1),
-                                                                                                  new IntegerLiteralExp(2))))),
+                                             Arrays.asList(new ReturnStmt(Optional.of(new MakeStructureExp(twoInts,
+                                                                                                           Arrays.asList(new IntegerLiteralExp(1),
+                                                                                                                         new IntegerLiteralExp(2))))))),
                       mkMain(new PrintStmt(access)));
     }
 
@@ -142,7 +150,7 @@ public class MIPSCodeGeneratorFunctionTest extends MIPSCodeGeneratorTestBase<Fun
 
         final FunctionName foo = new FunctionName("foo");
         final StructureName twoInts = new StructureName("TwoInts");
-        final FieldAccessExp access = new FieldAccessExp(new FunctionCallExp(foo, new ArrayList<Exp>()),
+        final FieldAccessExp access = new FieldAccessExp(directCall(foo, new ArrayList<Exp>()),
                                                          new FieldName("y"));
         access.expStructure = Optional.of(twoInts);
         
@@ -151,9 +159,9 @@ public class MIPSCodeGeneratorFunctionTest extends MIPSCodeGeneratorTestBase<Fun
                       new FunctionDefinition(new StructureType(twoInts),
                                              foo,
                                              new ArrayList<VariableDeclaration>(),
-                                             new ReturnExpStmt(new MakeStructureExp(twoInts,
-                                                                                    Arrays.asList(new IntegerLiteralExp(1),
-                                                                                                  new IntegerLiteralExp(2))))),
+                                             Arrays.asList(new ReturnStmt(Optional.of(new MakeStructureExp(twoInts,
+                                                                                                           Arrays.asList(new IntegerLiteralExp(1),
+                                                                                                                         new IntegerLiteralExp(2))))))),
                       mkMain(new PrintStmt(access)));
     }
 
@@ -168,9 +176,9 @@ public class MIPSCodeGeneratorFunctionTest extends MIPSCodeGeneratorTestBase<Fun
 
         final FunctionName foo = new FunctionName("foo");
         final StructureName twoInts = new StructureName("TwoInts");
-        final FieldAccessExp access = new FieldAccessExp(new FunctionCallExp(foo,
-                                                                             Arrays.asList(new IntegerLiteralExp(1),
-                                                                                           new IntegerLiteralExp(2))),
+        final FieldAccessExp access = new FieldAccessExp(directCall(foo,
+                                                                    Arrays.asList(new IntegerLiteralExp(1),
+                                                                                  new IntegerLiteralExp(2))),
                                                          new FieldName("x"));
         access.expStructure = Optional.of(twoInts);
 
@@ -183,9 +191,9 @@ public class MIPSCodeGeneratorFunctionTest extends MIPSCodeGeneratorTestBase<Fun
                                              foo,
                                              Arrays.asList(new VariableDeclaration(new IntType(), a),
                                                            new VariableDeclaration(new IntType(), b)),
-                                             new ReturnExpStmt(new MakeStructureExp(twoInts,
-                                                                                    Arrays.asList(new VariableExp(a),
-                                                                                                  new VariableExp(b))))),
+                                             Arrays.asList(new ReturnStmt(Optional.of(new MakeStructureExp(twoInts,
+                                                                                                           Arrays.asList(new VariableExp(a),
+                                                                                                                         new VariableExp(b))))))),
                       mkMain(new PrintStmt(access)));
     }
 
@@ -200,9 +208,9 @@ public class MIPSCodeGeneratorFunctionTest extends MIPSCodeGeneratorTestBase<Fun
 
         final FunctionName foo = new FunctionName("foo");
         final StructureName twoInts = new StructureName("TwoInts");
-        final FieldAccessExp access = new FieldAccessExp(new FunctionCallExp(foo,
-                                                                             Arrays.asList(new IntegerLiteralExp(1),
-                                                                                           new IntegerLiteralExp(2))),
+        final FieldAccessExp access = new FieldAccessExp(directCall(foo,
+                                                                    Arrays.asList(new IntegerLiteralExp(1),
+                                                                                  new IntegerLiteralExp(2))),
                                                          new FieldName("y"));
         access.expStructure = Optional.of(twoInts);
 
@@ -215,9 +223,9 @@ public class MIPSCodeGeneratorFunctionTest extends MIPSCodeGeneratorTestBase<Fun
                                              foo,
                                              Arrays.asList(new VariableDeclaration(new IntType(), a),
                                                            new VariableDeclaration(new IntType(), b)),
-                                             new ReturnExpStmt(new MakeStructureExp(twoInts,
-                                                                                    Arrays.asList(new VariableExp(a),
-                                                                                                  new VariableExp(b))))),
+                                             Arrays.asList(new ReturnStmt(Optional.of(new MakeStructureExp(twoInts,
+                                                                                                           Arrays.asList(new VariableExp(a),
+                                                                                                                         new VariableExp(b))))))),
                       mkMain(new PrintStmt(access)));
     }
 
@@ -242,11 +250,11 @@ public class MIPSCodeGeneratorFunctionTest extends MIPSCodeGeneratorTestBase<Fun
                       new FunctionDefinition(new VoidType(),
                                              foo,
                                              Arrays.asList(new VariableDeclaration(new StructureType(twoInts), s)),
-                                             new PrintStmt(access)),
-                      mkMain(new FunctionCallStmt(foo,
-                                                  Arrays.asList(new MakeStructureExp(twoInts,
-                                                                                     Arrays.asList(new IntegerLiteralExp(1),
-                                                                                                   new IntegerLiteralExp(2)))))));
+                                             Arrays.asList(new PrintStmt(access))),
+                      mkMain(new ExpStmt(directCall(foo,
+                                                    Arrays.asList(new MakeStructureExp(twoInts,
+                                                                                       Arrays.asList(new IntegerLiteralExp(1),
+                                                                                                     new IntegerLiteralExp(2))))))));
     }
 
     @Test
@@ -270,11 +278,11 @@ public class MIPSCodeGeneratorFunctionTest extends MIPSCodeGeneratorTestBase<Fun
                       new FunctionDefinition(new VoidType(),
                                              foo,
                                              Arrays.asList(new VariableDeclaration(new StructureType(twoInts), s)),
-                                             new PrintStmt(access)),
-                      mkMain(new FunctionCallStmt(foo,
-                                                  Arrays.asList(new MakeStructureExp(twoInts,
-                                                                                     Arrays.asList(new IntegerLiteralExp(1),
-                                                                                                   new IntegerLiteralExp(2)))))));
+                                             Arrays.asList(new PrintStmt(access))),
+                      mkMain(new ExpStmt(directCall(foo,
+                                                    Arrays.asList(new MakeStructureExp(twoInts,
+                                                                                       Arrays.asList(new IntegerLiteralExp(1),
+                                                                                                     new IntegerLiteralExp(2))))))));
     }
 
     @Test
@@ -307,18 +315,18 @@ public class MIPSCodeGeneratorFunctionTest extends MIPSCodeGeneratorTestBase<Fun
                                              foo,
                                              Arrays.asList(new VariableDeclaration(new StructureType(twoInts), x),
                                                            new VariableDeclaration(new StructureType(twoInts), y)),
-                                             new ReturnExpStmt(new MakeStructureExp(fourInts,
-                                                                                    Arrays.asList(new VariableExp(x),
-                                                                                                  new VariableExp(y))))),
+                                             Arrays.asList(new ReturnStmt(Optional.of(new MakeStructureExp(fourInts,
+                                                                                                           Arrays.asList(new VariableExp(x),
+                                                                                                                         new VariableExp(y))))))),
                       mkMain(stmts(vardec("f",
                                           new StructureType(fourInts),
-                                          new FunctionCallExp(foo,
-                                                              Arrays.asList(new MakeStructureExp(twoInts,
-                                                                                                 Arrays.asList(new IntegerLiteralExp(1),
-                                                                                                               new IntegerLiteralExp(2))),
-                                                                            new MakeStructureExp(twoInts,
-                                                                                                 Arrays.asList(new IntegerLiteralExp(3),
-                                                                                                               new IntegerLiteralExp(4)))))),
+                                          directCall(foo,
+                                                     Arrays.asList(new MakeStructureExp(twoInts,
+                                                                                        Arrays.asList(new IntegerLiteralExp(1),
+                                                                                                      new IntegerLiteralExp(2))),
+                                                                   new MakeStructureExp(twoInts,
+                                                                                        Arrays.asList(new IntegerLiteralExp(3),
+                                                                                                      new IntegerLiteralExp(4)))))),
                                    new PrintStmt(accessX))));
     }
 
@@ -339,30 +347,29 @@ public class MIPSCodeGeneratorFunctionTest extends MIPSCodeGeneratorTestBase<Fun
 
         final FunctionName fib = new FunctionName("fib");
         final Variable x = new Variable("x");
-        final Exp recursiveCase = new BinopExp(new FunctionCallExp(fib,
-                                                                   Arrays.asList(new BinopExp(new VariableExp(x),
-                                                                                              new MinusOp(),
-                                                                                              new IntegerLiteralExp(1)))),
+        final Exp recursiveCase = new BinopExp(directCall(fib,
+                                                          Arrays.asList(new BinopExp(new VariableExp(x),
+                                                                                     new MinusOp(),
+                                                                                     new IntegerLiteralExp(1)))),
                                                new PlusOp(),
-                                               new FunctionCallExp(fib,
-                                                                   Arrays.asList(new BinopExp(new VariableExp(x),
-                                                                                              new MinusOp(),
-                                                                                              new IntegerLiteralExp(2)))));
+                                               directCall(fib,
+                                                          Arrays.asList(new BinopExp(new VariableExp(x),
+                                                                                     new MinusOp(),
+                                                                                     new IntegerLiteralExp(2)))));
         assertResultF(13,
                       new FunctionDefinition(new IntType(),
                                              fib,
                                              Arrays.asList(new VariableDeclaration(new IntType(), x)),
-                                             new IfStmt(new BinopExp(new VariableExp(x),
-                                                                     new EqualsOp(),
-                                                                     new IntegerLiteralExp(0)),
-                                                        new ReturnExpStmt(new IntegerLiteralExp(0)),
-                                                        new IfStmt(new BinopExp(new VariableExp(x),
-                                                                                new EqualsOp(),
-                                                                                new IntegerLiteralExp(1)),
-                                                                   new ReturnExpStmt(new IntegerLiteralExp(1)),
-                                                                   new ReturnExpStmt(recursiveCase)))),
-                      mkMain(new PrintStmt(new FunctionCallExp(fib,
-                                                               Arrays.asList(new IntegerLiteralExp(7))))));
+                                             Arrays.asList(new IfStmt(new BinopExp(new VariableExp(x),
+                                                                                   new EqualsOp(),
+                                                                                   new IntegerLiteralExp(0)),
+                                                                      new ReturnStmt(Optional.of(new IntegerLiteralExp(0))),
+                                                                      Optional.of(new IfStmt(new BinopExp(new VariableExp(x),
+                                                                                                          new EqualsOp(),
+                                                                                                          new IntegerLiteralExp(1)),
+                                                                                             new ReturnStmt(Optional.of(new IntegerLiteralExp(1))),
+                                                                                             Optional.of(new ReturnStmt(Optional.of(recursiveCase)))))))),
+                      mkMain(new PrintStmt(directCall(fib,
+                                                      Arrays.asList(new IntegerLiteralExp(7))))));
     }
 }
-

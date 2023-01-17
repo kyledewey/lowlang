@@ -5,6 +5,7 @@ import lowlang.parser.*;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Optional;
 
 import org.junit.Test;
 
@@ -17,12 +18,7 @@ public class TypecheckerScopeTest {
         new ArrayList<VariableDeclaration>();
     
     public static Stmt stmts(final Stmt... input) {
-        assert(input.length > 0);
-        Stmt result = input[input.length - 1];
-        for (int index = input.length - 2; index >= 0; index--) {
-            result = new SequenceStmt(input[index], result);
-        }
-        return result;
+        return new BlockStmt(Arrays.asList(input));
     }
 
     public static VariableDeclarationInitializationStmt def(final Type type, final String name, final Exp exp) {
@@ -36,7 +32,7 @@ public class TypecheckerScopeTest {
         return new FunctionDefinition(new VoidType(),
                                       new FunctionName("foo"),
                                       EMPTY_VARDECS,
-                                      body);
+                                      Arrays.asList(body));
     }
     
     @Test
@@ -443,7 +439,7 @@ public class TypecheckerScopeTest {
                                    new FunctionName("blah"),
                                    Arrays.asList(new VariableDeclaration(new IntType(), new Variable("x")),
                                                  new VariableDeclaration(new BoolType(), new Variable("y"))),
-                                   new ReturnExpStmt(new IntegerLiteralExp(7)));
+                                   Arrays.asList(new ReturnStmt(Optional.of(new IntegerLiteralExp(7)))));
         final FunctionDefinition foo =
             voidFunction(new ExpStmt(new FunctionCallExp(new FunctionName("blah"),
                                                          Arrays.asList(new IntegerLiteralExp(7),
@@ -463,7 +459,7 @@ public class TypecheckerScopeTest {
             new FunctionDefinition(new IntType(),
                                    new FunctionName("blah"),
                                    Arrays.asList(new VariableDeclaration(new VoidType(), new Variable("x"))),
-                                   new ReturnExpStmt(new IntegerLiteralExp(7)));
+                                   Arrays.asList(new ReturnStmt(Optional.of(new IntegerLiteralExp(7)))));
         final Program prog = new Program(EMPTY_STRUCTURES,
                                          Arrays.asList(blah));
         Typechecker.typecheckProgram(prog);
@@ -478,7 +474,7 @@ public class TypecheckerScopeTest {
                                    new FunctionName("foo"),
                                    Arrays.asList(new VariableDeclaration(new StructureType(new StructureName("Foo")),
                                                                          new Variable("f"))),
-                                   new ReturnVoidStmt());
+                                   Arrays.asList(new ReturnStmt(Optional.empty())));
 
         final Program prog = new Program(EMPTY_STRUCTURES,
                                          Arrays.asList(foo));
@@ -496,7 +492,7 @@ public class TypecheckerScopeTest {
                                    new FunctionName("blah"),
                                    Arrays.asList(new VariableDeclaration(new PointerType(new VoidType()),
                                                                          new Variable("x"))),
-                                   new ReturnExpStmt(new IntegerLiteralExp(7)));
+                                   Arrays.asList(new ReturnStmt(Optional.of(new IntegerLiteralExp(7)))));
         final Program prog = new Program(EMPTY_STRUCTURES,
                                          Arrays.asList(blah));
         Typechecker.typecheckProgram(prog);
@@ -508,7 +504,7 @@ public class TypecheckerScopeTest {
         // void foo() { return; }
 
         final FunctionDefinition foo =
-            voidFunction(new ReturnVoidStmt());
+            voidFunction(new ReturnStmt(Optional.empty()));
         
         final Program prog = new Program(EMPTY_STRUCTURES,
                                          Arrays.asList(foo, foo));
@@ -526,7 +522,7 @@ public class TypecheckerScopeTest {
                                                                          new Variable("x")),
                                                  new VariableDeclaration(new BoolType(),
                                                                          new Variable("x"))),
-                                   new ReturnVoidStmt());
+                                   Arrays.asList(new ReturnStmt(Optional.empty())));
 
         final Program prog = new Program(EMPTY_STRUCTURES,
                                          Arrays.asList(foo));
@@ -546,7 +542,7 @@ public class TypecheckerScopeTest {
                                    new FunctionName("blah"),
                                    Arrays.asList(new VariableDeclaration(new IntType(), new Variable("x")),
                                                  new VariableDeclaration(new BoolType(), new Variable("y"))),
-                                   new ReturnExpStmt(new IntegerLiteralExp(7)));
+                                   Arrays.asList(new ReturnStmt(Optional.of(new IntegerLiteralExp(7)))));
         final FunctionDefinition foo =
             voidFunction(new ExpStmt(new FunctionCallExp(new FunctionName("blah"),
                                                          Arrays.asList(new IntegerLiteralExp(7)))));
@@ -569,7 +565,7 @@ public class TypecheckerScopeTest {
                                    new FunctionName("blah"),
                                    Arrays.asList(new VariableDeclaration(new IntType(), new Variable("x")),
                                                  new VariableDeclaration(new BoolType(), new Variable("y"))),
-                                   new ReturnExpStmt(new IntegerLiteralExp(7)));
+                                   Arrays.asList(new ReturnStmt(Optional.of(new IntegerLiteralExp(7)))));
         final FunctionDefinition foo =
             voidFunction(new ExpStmt(new FunctionCallExp(new FunctionName("blah"),
                                                          Arrays.asList(new IntegerLiteralExp(7),
@@ -594,7 +590,7 @@ public class TypecheckerScopeTest {
                                    new FunctionName("blah"),
                                    Arrays.asList(new VariableDeclaration(new IntType(), new Variable("x")),
                                                  new VariableDeclaration(new BoolType(), new Variable("y"))),
-                                   new ReturnExpStmt(new IntegerLiteralExp(7)));
+                                   Arrays.asList(new ReturnStmt(Optional.of(new IntegerLiteralExp(7)))));
         final FunctionDefinition foo =
             voidFunction(new ExpStmt(new FunctionCallExp(new FunctionName("blah"),
                                                          Arrays.asList(new BooleanLiteralExp(true),
@@ -631,8 +627,8 @@ public class TypecheckerScopeTest {
 
         final FunctionDefinition foo =
             voidFunction(new IfStmt(new BooleanLiteralExp(true),
-                                    new ReturnVoidStmt(),
-                                    new ReturnVoidStmt()));
+                                    new ReturnStmt(Optional.empty()),
+                                    Optional.of(new ReturnStmt(Optional.empty()))));
         final Program prog = new Program(EMPTY_STRUCTURES,
                                          Arrays.asList(foo));
         Typechecker.typecheckProgram(prog);
@@ -650,8 +646,8 @@ public class TypecheckerScopeTest {
 
         final FunctionDefinition foo =
             voidFunction(new IfStmt(new IntegerLiteralExp(1),
-                                    new ReturnVoidStmt(),
-                                    new ReturnVoidStmt()));
+                                    new ReturnStmt(Optional.empty()),
+                                    Optional.of(new ReturnStmt(Optional.empty()))));
         final Program prog = new Program(EMPTY_STRUCTURES,
                                          Arrays.asList(foo));
         Typechecker.typecheckProgram(prog);
@@ -669,8 +665,8 @@ public class TypecheckerScopeTest {
 
         final FunctionDefinition foo =
             voidFunction(new IfStmt(new BooleanLiteralExp(true),
-                                    new ReturnExpStmt(new IntegerLiteralExp(1)),
-                                    new ReturnVoidStmt()));
+                                    new ReturnStmt(Optional.of(new IntegerLiteralExp(1))),
+                                    Optional.of(new ReturnStmt(Optional.empty()))));
         final Program prog = new Program(EMPTY_STRUCTURES,
                                          Arrays.asList(foo));
         Typechecker.typecheckProgram(prog);
@@ -688,8 +684,8 @@ public class TypecheckerScopeTest {
 
         final FunctionDefinition foo =
             voidFunction(new IfStmt(new BooleanLiteralExp(true),
-                                    new ReturnVoidStmt(),
-                                    new ReturnExpStmt(new IntegerLiteralExp(1))));
+                                    new ReturnStmt(Optional.empty()),
+                                    Optional.of(new ReturnStmt(Optional.of(new IntegerLiteralExp(1))))));
         final Program prog = new Program(EMPTY_STRUCTURES,
                                          Arrays.asList(foo));
         Typechecker.typecheckProgram(prog);
@@ -705,7 +701,7 @@ public class TypecheckerScopeTest {
 
         final FunctionDefinition foo =
             voidFunction(new WhileStmt(new BooleanLiteralExp(true),
-                                       new ReturnVoidStmt()));
+                                       new ReturnStmt(Optional.empty())));
         
         final Program prog = new Program(EMPTY_STRUCTURES,
                                          Arrays.asList(foo));
@@ -722,7 +718,7 @@ public class TypecheckerScopeTest {
 
         final FunctionDefinition foo =
             voidFunction(new WhileStmt(new IntegerLiteralExp(1),
-                                       new ReturnVoidStmt()));
+                                       new ReturnStmt(Optional.empty())));
         
         final Program prog = new Program(EMPTY_STRUCTURES,
                                          Arrays.asList(foo));
@@ -739,7 +735,7 @@ public class TypecheckerScopeTest {
 
         final FunctionDefinition foo =
             voidFunction(new WhileStmt(new BooleanLiteralExp(true),
-                                       new ReturnExpStmt(new IntegerLiteralExp(1))));
+                                       new ReturnStmt(Optional.of(new IntegerLiteralExp(1)))));
         
         final Program prog = new Program(EMPTY_STRUCTURES,
                                          Arrays.asList(foo));
@@ -913,7 +909,7 @@ public class TypecheckerScopeTest {
         // }
 
         final FunctionDefinition foo =
-            voidFunction(new ReturnVoidStmt());
+            voidFunction(new ReturnStmt(Optional.empty()));
 
         final Program prog = new Program(EMPTY_STRUCTURES,
                                          Arrays.asList(foo));
@@ -928,8 +924,8 @@ public class TypecheckerScopeTest {
         // }
 
         final FunctionDefinition foo =
-            voidFunction(stmts(new ReturnVoidStmt(),
-                               new ReturnVoidStmt()));
+            voidFunction(stmts(new ReturnStmt(Optional.empty()),
+                               new ReturnStmt(Optional.empty())));
 
         final Program prog = new Program(EMPTY_STRUCTURES,
                                          Arrays.asList(foo));
@@ -948,14 +944,14 @@ public class TypecheckerScopeTest {
 
         final Stmt body =
             new IfStmt(new BooleanLiteralExp(true),
-                       new ReturnExpStmt(new IntegerLiteralExp(1)),
-                       new ExpStmt(new IntegerLiteralExp(1)));
+                       new ReturnStmt(Optional.of(new IntegerLiteralExp(1))),
+                       Optional.of(new ExpStmt(new IntegerLiteralExp(1))));
         
         final FunctionDefinition foo =
             new FunctionDefinition(new IntType(),
                                    new FunctionName("foo"),
                                    EMPTY_VARDECS,
-                                   body);
+                                   Arrays.asList(body));
 
         final Program prog = new Program(EMPTY_STRUCTURES,
                                          Arrays.asList(foo));
@@ -975,13 +971,13 @@ public class TypecheckerScopeTest {
         final Stmt body =
             new IfStmt(new BooleanLiteralExp(true),
                        new ExpStmt(new IntegerLiteralExp(1)),
-                       new ReturnExpStmt(new IntegerLiteralExp(1)));
+                       Optional.of(new ReturnStmt(Optional.of(new IntegerLiteralExp(1)))));
         
         final FunctionDefinition foo =
             new FunctionDefinition(new IntType(),
                                    new FunctionName("foo"),
                                    EMPTY_VARDECS,
-                                   body);
+                                   Arrays.asList(body));
 
         final Program prog = new Program(EMPTY_STRUCTURES,
                                          Arrays.asList(foo));
@@ -1000,14 +996,14 @@ public class TypecheckerScopeTest {
 
         final Stmt body =
             new IfStmt(new BooleanLiteralExp(true),
-                       new ReturnExpStmt(new IntegerLiteralExp(1)),
-                       new ReturnExpStmt(new IntegerLiteralExp(2)));
+                       new ReturnStmt(Optional.of(new IntegerLiteralExp(1))),
+                       Optional.of(new ReturnStmt(Optional.of(new IntegerLiteralExp(2)))));
         
         final FunctionDefinition foo =
             new FunctionDefinition(new IntType(),
                                    new FunctionName("foo"),
                                    EMPTY_VARDECS,
-                                   body);
+                                   Arrays.asList(body));
 
         final Program prog = new Program(EMPTY_STRUCTURES,
                                          Arrays.asList(foo));
