@@ -1,5 +1,7 @@
 package lowlang.typechecker;
 
+import lowlang.tokenizer.Tokenizer;
+import lowlang.tokenizer.TokenizerException;
 import lowlang.parser.*;
 
 import static org.junit.Assert.assertTrue;
@@ -14,6 +16,13 @@ import org.junit.Test;
 // -No pointers (which depend on variables or structures)
 public class TypecheckerExpTest {
     // use null if there should be a type error
+    public void assertExpType(final String expectedType,
+                              final String exp) throws TokenizerException, ParseException {
+        assertExpType((expectedType == null) ? null : Parser.parseType(Tokenizer.tokenize(expectedType)),
+                      Parser.parseExp(Tokenizer.tokenize(exp)));
+    }
+    
+    // use null if there should be a type error
     public void assertExpType(final Type expected, final Exp exp) {
         try {
             final Type received = Typechecker.expTypeForTesting(exp);
@@ -27,9 +36,10 @@ public class TypecheckerExpTest {
     }
 
     @Test
-    public void testIntegerLiteralExp() {
-        assertExpType(new IntType(),
-                      new IntegerLiteralExp(42));
+    public void testIntegerLiteralExp() throws TokenizerException, ParseException {
+        assertExpType("int", "42");
+        // assertExpType(new IntType(),
+        //               new IntegerLiteralExp(42));
     }
 
     @Test

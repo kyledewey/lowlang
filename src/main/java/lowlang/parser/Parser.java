@@ -313,6 +313,7 @@ public class Parser {
         }
 
         final ParseResult<Exp> rest = parseDotOrCallExp(position);
+        position = rest.nextPosition;
         Exp retval = rest.result;
         Collections.reverse(items);
         for (final CastOrMemItem item : items) {
@@ -641,6 +642,24 @@ public class Parser {
             throw new ParseException("Remaining tokens at end, starting at: " + program.nextPosition);
         }
     } // parseProgram
+
+    public static Exp parseExp(final Token[] tokens) throws ParseException {
+        final ParseResult<Exp> exp = new Parser(tokens).parseExp(0);
+        if (exp.nextPosition == tokens.length) {
+            return exp.result;
+        } else {
+            throw new ParseException("Remaining tokens at end, starting at: " + exp.nextPosition);
+        }
+    }
+
+    public static Type parseType(final Token[] tokens) throws ParseException {
+        final ParseResult<Type> type = new Parser(tokens).parseType(0);
+        if (type.nextPosition == tokens.length) {
+            return type.result;
+        } else {
+            throw new ParseException("Remaining tokens at end, starting at: " + type.nextPosition);
+        }
+    }
 
     public static Program parse(final Token[] tokens) throws ParseException {
         return new Parser(tokens).parseProgram();
