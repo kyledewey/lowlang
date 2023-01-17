@@ -38,143 +38,96 @@ public class TypecheckerExpTest {
     @Test
     public void testIntegerLiteralExp() throws TokenizerException, ParseException {
         assertExpType("int", "42");
-        // assertExpType(new IntType(),
-        //               new IntegerLiteralExp(42));
     }
 
     @Test
-    public void testBooleanLiteralExp() {
-        assertExpType(new BoolType(),
-                      new BooleanLiteralExp(true));
+    public void testBooleanLiteralExp() throws TokenizerException, ParseException {
+        assertExpType("bool", "true");
     }
 
     @Test
-    public void testMallocWithInt() {
-        assertExpType(new PointerType(new VoidType()),
-                      new MallocExp(new IntegerLiteralExp(42)));
+    public void testMallocWithInt() throws TokenizerException, ParseException {
+        assertExpType("void*", "malloc(42)");
     }
 
     @Test
-    public void testMallocWithNonInt() {
+    public void testMallocWithNonInt() throws TokenizerException, ParseException {
         assertExpType(null,
-                      new MallocExp(new BooleanLiteralExp(false)));
+                      "malloc(false)");
     }
 
     @Test
-    public void testSizeof() {
-        assertExpType(new IntType(),
-                      new SizeofExp(new BoolType()));
+    public void testSizeof() throws TokenizerException, ParseException {
+        assertExpType("int", "sizeof(bool)");
     }
 
     @Test
-    public void testBinopPlusInts() {
-        assertExpType(new IntType(),
-                      new BinopExp(new IntegerLiteralExp(1),
-                                   new PlusOp(),
-                                   new IntegerLiteralExp(2)));
+    public void testBinopPlusInts() throws TokenizerException, ParseException {
+        assertExpType("int", "1 + 2");
     }
 
     @Test
-    public void testBinopPlusNonIntOrPointer() {
-        assertExpType(null,
-                      new BinopExp(new BooleanLiteralExp(true),
-                                   new PlusOp(),
-                                   new IntegerLiteralExp(1)));
+    public void testBinopPlusNonIntOrPointer() throws TokenizerException, ParseException {
+        assertExpType(null, "true + 1");
     }
 
     @Test
-    public void testMinusInts() {
-        assertExpType(new IntType(),
-                      new BinopExp(new IntegerLiteralExp(1),
-                                   new MinusOp(),
-                                   new IntegerLiteralExp(2)));
+    public void testMinusInts() throws TokenizerException, ParseException {
+        assertExpType("int", "1 - 2");
     }
 
     @Test
-    public void testMinusNonInts() {
-        assertExpType(null,
-                      new BinopExp(new IntegerLiteralExp(1),
-                                   new MinusOp(),
-                                   new BooleanLiteralExp(true)));
+    public void testMinusNonInts() throws TokenizerException, ParseException {
+        assertExpType(null, "1 - true");
     }
 
     @Test
-    public void testMultInts() {
-        assertExpType(new IntType(),
-                      new BinopExp(new IntegerLiteralExp(1),
-                                   new MultOp(),
-                                   new IntegerLiteralExp(2)));
+    public void testMultInts() throws TokenizerException, ParseException {
+        assertExpType("int", "1 * 2");
     }
 
     @Test
-    public void testMultNonInts() {
-        assertExpType(null,
-                      new BinopExp(new IntegerLiteralExp(1),
-                                   new MultOp(),
-                                   new BooleanLiteralExp(false)));
+    public void testMultNonInts() throws TokenizerException, ParseException {
+        assertExpType(null, "1 * false");
     }
 
     @Test
-    public void testDivInts() {
-        assertExpType(new IntType(),
-                      new BinopExp(new IntegerLiteralExp(1),
-                                   new DivOp(),
-                                   new IntegerLiteralExp(2)));
+    public void testDivInts() throws TokenizerException, ParseException {
+        assertExpType("int", "1 / 2");
     }
 
     @Test
-    public void testDivNonInts() {
-        assertExpType(null,
-                      new BinopExp(new IntegerLiteralExp(1),
-                                   new DivOp(),
-                                   new BooleanLiteralExp(true)));
+    public void testDivNonInts() throws TokenizerException, ParseException {
+        assertExpType(null, "1 / true");
     }
 
     @Test
-    public void testEqualSameType() {
-        assertExpType(new BoolType(),
-                      new BinopExp(new IntegerLiteralExp(1),
-                                   new EqualsOp(),
-                                   new IntegerLiteralExp(1)));
+    public void testEqualSameType() throws TokenizerException, ParseException {
+        assertExpType("bool", "1 == 1");
     }
 
     @Test
-    public void testEqualDifferentTypes() {
-        assertExpType(null,
-                      new BinopExp(new BooleanLiteralExp(true),
-                                   new EqualsOp(),
-                                   new IntegerLiteralExp(1)));
+    public void testEqualDifferentTypes() throws TokenizerException, ParseException {
+        assertExpType(null, "true == 1");
     }
 
     @Test
-    public void testLessThanInts() {
-        assertExpType(new BoolType(),
-                      new BinopExp(new IntegerLiteralExp(1),
-                                   new LessThanOp(),
-                                   new IntegerLiteralExp(0)));
+    public void testLessThanInts() throws TokenizerException, ParseException {
+        assertExpType("bool", "1 < 0");
     }
 
     @Test
-    public void testLessThanNonInts() {
-        assertExpType(null,
-                      new BinopExp(new BooleanLiteralExp(true),
-                                   new LessThanOp(),
-                                   new IntegerLiteralExp(0)));
+    public void testLessThanNonInts() throws TokenizerException, ParseException {
+        assertExpType(null, "true < 0");
     }
 
     @Test
-    public void testCastWellTypedSubexpression() {
-        assertExpType(new IntType(),
-                      new CastExp(new IntType(),
-                                  new BooleanLiteralExp(true)));
+    public void testCastWellTypedSubexpression() throws TokenizerException, ParseException {
+        assertExpType("int", "(int)true");
     }
 
     @Test
-    public void testCastIllTypedSubexpression() {
-        assertExpType(null,
-                      new CastExp(new BoolType(),
-                                  new BinopExp(new IntegerLiteralExp(1),
-                                               new PlusOp(),
-                                               new BooleanLiteralExp(true))));
+    public void testCastIllTypedSubexpression() throws TokenizerException, ParseException {
+        assertExpType(null, "(bool)(1 + true)");
     }
 } // TypecheckerTest
