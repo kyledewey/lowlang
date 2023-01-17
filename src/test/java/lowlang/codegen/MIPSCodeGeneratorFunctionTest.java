@@ -113,6 +113,14 @@ public class MIPSCodeGeneratorFunctionTest extends MIPSCodeGeneratorTestBase<Fun
                                                                     new IntegerLiteralExp(2))))));
     }
 
+    public static CallLikeExp makeStructure(final StructureName structureName,
+                                            final List<Exp> params) {
+        final CallLikeExp retval = new CallLikeExp(new VariableExp(new Variable(structureName.name)),
+                                                   params);
+        retval.resolution = Optional.of(new MakeStructureResolved(structureName));
+        return retval;
+    }
+    
     @Test
     public void testReturnStructureConstantGetFirst() throws IOException {
         // TwoInts foo() {
@@ -133,9 +141,9 @@ public class MIPSCodeGeneratorFunctionTest extends MIPSCodeGeneratorTestBase<Fun
                       new FunctionDefinition(new StructureType(twoInts),
                                              foo,
                                              new ArrayList<VariableDeclaration>(),
-                                             Arrays.asList(new ReturnStmt(Optional.of(new MakeStructureExp(twoInts,
-                                                                                                           Arrays.asList(new IntegerLiteralExp(1),
-                                                                                                                         new IntegerLiteralExp(2))))))),
+                                             Arrays.asList(new ReturnStmt(Optional.of(makeStructure(twoInts,
+                                                                                                    Arrays.asList(new IntegerLiteralExp(1),
+                                                                                                                  new IntegerLiteralExp(2))))))),
                       mkMain(new PrintStmt(access)));
     }
 
@@ -159,9 +167,9 @@ public class MIPSCodeGeneratorFunctionTest extends MIPSCodeGeneratorTestBase<Fun
                       new FunctionDefinition(new StructureType(twoInts),
                                              foo,
                                              new ArrayList<VariableDeclaration>(),
-                                             Arrays.asList(new ReturnStmt(Optional.of(new MakeStructureExp(twoInts,
-                                                                                                           Arrays.asList(new IntegerLiteralExp(1),
-                                                                                                                         new IntegerLiteralExp(2))))))),
+                                             Arrays.asList(new ReturnStmt(Optional.of(makeStructure(twoInts,
+                                                                                                    Arrays.asList(new IntegerLiteralExp(1),
+                                                                                                                  new IntegerLiteralExp(2))))))),
                       mkMain(new PrintStmt(access)));
     }
 
@@ -191,9 +199,9 @@ public class MIPSCodeGeneratorFunctionTest extends MIPSCodeGeneratorTestBase<Fun
                                              foo,
                                              Arrays.asList(new VariableDeclaration(new IntType(), a),
                                                            new VariableDeclaration(new IntType(), b)),
-                                             Arrays.asList(new ReturnStmt(Optional.of(new MakeStructureExp(twoInts,
-                                                                                                           Arrays.asList(new VariableExp(a),
-                                                                                                                         new VariableExp(b))))))),
+                                             Arrays.asList(new ReturnStmt(Optional.of(makeStructure(twoInts,
+                                                                                                    Arrays.asList(new VariableExp(a),
+                                                                                                                  new VariableExp(b))))))),
                       mkMain(new PrintStmt(access)));
     }
 
@@ -223,12 +231,19 @@ public class MIPSCodeGeneratorFunctionTest extends MIPSCodeGeneratorTestBase<Fun
                                              foo,
                                              Arrays.asList(new VariableDeclaration(new IntType(), a),
                                                            new VariableDeclaration(new IntType(), b)),
-                                             Arrays.asList(new ReturnStmt(Optional.of(new MakeStructureExp(twoInts,
-                                                                                                           Arrays.asList(new VariableExp(a),
-                                                                                                                         new VariableExp(b))))))),
+                                             Arrays.asList(new ReturnStmt(Optional.of(makeStructure(twoInts,
+                                                                                                    Arrays.asList(new VariableExp(a),
+                                                                                                                  new VariableExp(b))))))),
                       mkMain(new PrintStmt(access)));
     }
 
+    public static ExpStmt expStmt(final Exp exp,
+                                  final Type type) {
+        final ExpStmt retval = new ExpStmt(exp);
+        retval.expType = Optional.of(type);
+        return retval;
+    }
+    
     @Test
     public void testCanTakeStructureGetFirst() throws IOException {
         // void foo(TwoInts s) {
@@ -251,10 +266,11 @@ public class MIPSCodeGeneratorFunctionTest extends MIPSCodeGeneratorTestBase<Fun
                                              foo,
                                              Arrays.asList(new VariableDeclaration(new StructureType(twoInts), s)),
                                              Arrays.asList(new PrintStmt(access))),
-                      mkMain(new ExpStmt(directCall(foo,
-                                                    Arrays.asList(new MakeStructureExp(twoInts,
-                                                                                       Arrays.asList(new IntegerLiteralExp(1),
-                                                                                                     new IntegerLiteralExp(2))))))));
+                      mkMain(expStmt(directCall(foo,
+                                                Arrays.asList(makeStructure(twoInts,
+                                                                            Arrays.asList(new IntegerLiteralExp(1),
+                                                                                          new IntegerLiteralExp(2))))),
+                                     new VoidType())));
     }
 
     @Test
@@ -279,10 +295,11 @@ public class MIPSCodeGeneratorFunctionTest extends MIPSCodeGeneratorTestBase<Fun
                                              foo,
                                              Arrays.asList(new VariableDeclaration(new StructureType(twoInts), s)),
                                              Arrays.asList(new PrintStmt(access))),
-                      mkMain(new ExpStmt(directCall(foo,
-                                                    Arrays.asList(new MakeStructureExp(twoInts,
-                                                                                       Arrays.asList(new IntegerLiteralExp(1),
-                                                                                                     new IntegerLiteralExp(2))))))));
+                      mkMain(expStmt(directCall(foo,
+                                                Arrays.asList(makeStructure(twoInts,
+                                                                            Arrays.asList(new IntegerLiteralExp(1),
+                                                                                          new IntegerLiteralExp(2))))),
+                                     new VoidType())));
     }
 
     @Test
@@ -315,18 +332,18 @@ public class MIPSCodeGeneratorFunctionTest extends MIPSCodeGeneratorTestBase<Fun
                                              foo,
                                              Arrays.asList(new VariableDeclaration(new StructureType(twoInts), x),
                                                            new VariableDeclaration(new StructureType(twoInts), y)),
-                                             Arrays.asList(new ReturnStmt(Optional.of(new MakeStructureExp(fourInts,
-                                                                                                           Arrays.asList(new VariableExp(x),
-                                                                                                                         new VariableExp(y))))))),
+                                             Arrays.asList(new ReturnStmt(Optional.of(makeStructure(fourInts,
+                                                                                                    Arrays.asList(new VariableExp(x),
+                                                                                                                  new VariableExp(y))))))),
                       mkMain(stmts(vardec("f",
                                           new StructureType(fourInts),
                                           directCall(foo,
-                                                     Arrays.asList(new MakeStructureExp(twoInts,
-                                                                                        Arrays.asList(new IntegerLiteralExp(1),
-                                                                                                      new IntegerLiteralExp(2))),
-                                                                   new MakeStructureExp(twoInts,
-                                                                                        Arrays.asList(new IntegerLiteralExp(3),
-                                                                                                      new IntegerLiteralExp(4)))))),
+                                                     Arrays.asList(makeStructure(twoInts,
+                                                                                 Arrays.asList(new IntegerLiteralExp(1),
+                                                                                               new IntegerLiteralExp(2))),
+                                                                   makeStructure(twoInts,
+                                                                                 Arrays.asList(new IntegerLiteralExp(3),
+                                                                                               new IntegerLiteralExp(4)))))),
                                    new PrintStmt(accessX))));
     }
 

@@ -78,9 +78,9 @@ public class MIPSCodeGenerator {
         if (stmt instanceof VariableDeclarationInitializationStmt ||
             stmt instanceof AssignmentStmt ||
             stmt instanceof PrintStmt ||
-            stmt instanceof FunctionCallStmt ||
             stmt instanceof BreakStmt ||
-            stmt instanceof ContinueStmt) {
+            stmt instanceof ContinueStmt ||
+            stmt instanceof ExpStmt) {
             return false;
         } else if (stmt instanceof BlockStmt) {
             return containsReturn(((BlockStmt)stmt).stmts);
@@ -96,7 +96,7 @@ public class MIPSCodeGenerator {
         } else if (stmt instanceof WhileStmt) {
             return containsReturn(((WhileStmt)stmt).body);
         } else {
-            assert(false);
+            assert false : "Unknown stmt: " + stmt.toString();
             return false;
         }
     }
@@ -302,7 +302,7 @@ public class MIPSCodeGenerator {
             putLhsAddressIntoRegister(destination, asDeref.lhs);
             add(new Lw(destination, 0, destination));
         } else {
-            assert(false);
+            assert false : "Unexpected lhs: " + lhs.toString();
         }
     }
 
@@ -316,7 +316,7 @@ public class MIPSCodeGenerator {
             final DereferenceLhs asDereference = (DereferenceLhs)lhs;
             return sizeof(asDereference.typeAfterDereference.get());
         } else {
-            assert(false);
+            assert false : "Unexpected lhs: " + lhs.toString();
             return 0;
         }
     }
@@ -439,7 +439,7 @@ public class MIPSCodeGenerator {
         } else if (stmt instanceof ContinueStmt) {
             compileContinueStmt((ContinueStmt)stmt);
         } else {
-            assert(false);
+            assert false : "Unknown stmt: " + stmt.toString();
         }
     }
     
@@ -463,7 +463,7 @@ public class MIPSCodeGenerator {
             assert(sum % 4 == 0);
             return sum;
         } else {
-            assert(false);
+            assert false : "Unexpected type : " + type.toString();
             return 0;
         }
     } // sizeof
@@ -594,7 +594,7 @@ public class MIPSCodeGenerator {
             offset += sizeof(entry.getValue());
         }
 
-        assert(false);
+        assert false : "Field " + fieldName.toString() + " not on structure " + structureName.toString();
         return 0;
     } // fieldOffset
             
@@ -646,7 +646,7 @@ public class MIPSCodeGenerator {
         } else if (op instanceof LessThanOp) {
             add(new Slt(destination, left, right));
         } else {
-            assert(false);
+            assert false : "Unknown op: " + op.toString();
         }
     } // compileOp
     
@@ -721,7 +721,7 @@ public class MIPSCodeGenerator {
         } else if (resolution instanceof MakeStructureResolved) {
             compileMakeStructure(exp.params);
         } else {
-            assert(false);
+            assert false : "Unknown resolution: " + resolution.toString();
         }
     }
 
@@ -851,7 +851,7 @@ public class MIPSCodeGenerator {
         } else if (exp instanceof FieldAccessExp) {
             compileFieldAccessExp((FieldAccessExp)exp);
         } else {
-            assert(false);
+            assert false : "Unknown exp: " + exp.toString();
         }
     } // compileExpression
 

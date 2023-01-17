@@ -140,6 +140,12 @@ public class TypecheckerScopeTest {
         Typechecker.typecheckProgram(prog);
     }
 
+    public CallLikeExp makeStructure(final StructureName structureName,
+                                     final List<Exp> params) {
+        return new CallLikeExp(new VariableExp(new Variable(structureName.name)),
+                               params);
+    }
+    
     @Test
     public void testNormalStructureCreation() throws TypeErrorException {
         // Foo {
@@ -156,9 +162,9 @@ public class TypecheckerScopeTest {
                                                    new VariableDeclaration(new IntType(), new Variable("y"))));
         final Stmt body = stmts(def(new StructureType(sname),
                                     "f",
-                                    new MakeStructureExp(sname,
-                                                         Arrays.asList(new IntegerLiteralExp(7),
-                                                                       new IntegerLiteralExp(8)))));
+                                    makeStructure(sname,
+                                                  Arrays.asList(new IntegerLiteralExp(7),
+                                                                new IntegerLiteralExp(8)))));
         final FunctionDefinition fdef = voidFunction(body);
         final Program prog = new Program(Arrays.asList(sdef),
                                          Arrays.asList(fdef));
@@ -240,10 +246,10 @@ public class TypecheckerScopeTest {
                                                    new VariableDeclaration(new IntType(), new Variable("y"))));
         final Stmt body = stmts(def(new StructureType(sname),
                                     "f",
-                                    new MakeStructureExp(sname,
-                                                         Arrays.asList(new IntegerLiteralExp(7),
-                                                                       new IntegerLiteralExp(8),
-                                                                       new IntegerLiteralExp(9)))));
+                                    makeStructure(sname,
+                                                  Arrays.asList(new IntegerLiteralExp(7),
+                                                                new IntegerLiteralExp(8),
+                                                                new IntegerLiteralExp(9)))));
         final FunctionDefinition fdef = voidFunction(body);
         final Program prog = new Program(Arrays.asList(sdef),
                                          Arrays.asList(fdef));
@@ -266,9 +272,9 @@ public class TypecheckerScopeTest {
                                                    new VariableDeclaration(new BoolType(), new Variable("y"))));
         final Stmt body = stmts(def(new StructureType(sname),
                                     "f",
-                                    new MakeStructureExp(sname,
-                                                         Arrays.asList(new BooleanLiteralExp(true),
-                                                                       new IntegerLiteralExp(7)))));
+                                    makeStructure(sname,
+                                                  Arrays.asList(new BooleanLiteralExp(true),
+                                                                new IntegerLiteralExp(7)))));
         final FunctionDefinition fdef = voidFunction(body);
         final Program prog = new Program(Arrays.asList(sdef),
                                          Arrays.asList(fdef));
@@ -292,9 +298,9 @@ public class TypecheckerScopeTest {
                                                    new VariableDeclaration(new BoolType(), new Variable("y"))));
         final Stmt body = stmts(def(new StructureType(sname),
                                     "f",
-                                    new MakeStructureExp(sname,
-                                                         Arrays.asList(new IntegerLiteralExp(7),
-                                                                       new BooleanLiteralExp(true)))),
+                                    makeStructure(sname,
+                                                  Arrays.asList(new IntegerLiteralExp(7),
+                                                                new BooleanLiteralExp(true)))),
                                 def(new IntType(),
                                     "g",
                                     new FieldAccessExp(new VariableExp(new Variable("f")),
@@ -322,9 +328,9 @@ public class TypecheckerScopeTest {
                                                    new VariableDeclaration(new BoolType(), new Variable("y"))));
         final Stmt body = stmts(def(new StructureType(sname),
                                     "f",
-                                    new MakeStructureExp(sname,
-                                                         Arrays.asList(new IntegerLiteralExp(7),
-                                                                       new BooleanLiteralExp(true)))),
+                                    makeStructure(sname,
+                                                  Arrays.asList(new IntegerLiteralExp(7),
+                                                                new BooleanLiteralExp(true)))),
                                 new AssignmentStmt(new FieldAccessLhs(new VariableLhs(new Variable("f")),
                                                                       new FieldName("x")),
                                                    new IntegerLiteralExp(8)));
@@ -344,8 +350,8 @@ public class TypecheckerScopeTest {
         final FunctionDefinition foo =
             voidFunction(def(new StructureType(sname),
                              "f",
-                             new MakeStructureExp(sname,
-                                                  Arrays.asList(new IntegerLiteralExp(1)))));
+                             makeStructure(sname,
+                                           Arrays.asList(new IntegerLiteralExp(1)))));
         final Program prog = new Program(EMPTY_STRUCTURES,
                                          Arrays.asList(foo));
         Typechecker.typecheckProgram(prog);
@@ -368,9 +374,9 @@ public class TypecheckerScopeTest {
                                                    new VariableDeclaration(new BoolType(), new Variable("y"))));
         final Stmt body = stmts(def(new StructureType(sname),
                                     "f",
-                                    new MakeStructureExp(sname,
-                                                         Arrays.asList(new IntegerLiteralExp(7),
-                                                                       new BooleanLiteralExp(true)))),
+                                    makeStructure(sname,
+                                                  Arrays.asList(new IntegerLiteralExp(7),
+                                                                new BooleanLiteralExp(true)))),
                                 def(new IntType(),
                                     "g",
                                     new FieldAccessExp(new VariableExp(new Variable("f")),
@@ -412,9 +418,9 @@ public class TypecheckerScopeTest {
                                                    new VariableDeclaration(new BoolType(), new Variable("y"))));
         final Stmt body = stmts(def(new StructureType(sname),
                                     "f",
-                                    new MakeStructureExp(sname,
-                                                         Arrays.asList(new IntegerLiteralExp(7),
-                                                                       new BooleanLiteralExp(true)))),
+                                    makeStructure(sname,
+                                                  Arrays.asList(new IntegerLiteralExp(7),
+                                                                new BooleanLiteralExp(true)))),
                                 def(new PointerType(new IntType()),
                                     "g",
                                     new AddressOfExp(new FieldAccessLhs(new VariableLhs(new Variable("f")),
@@ -425,6 +431,12 @@ public class TypecheckerScopeTest {
         Typechecker.typecheckProgram(prog);
     }
 
+    public static CallLikeExp directCall(final FunctionName functionName,
+                                         final List<Exp> params) {
+        return new CallLikeExp(new VariableExp(new Variable(functionName.name)),
+                               params);
+    }
+    
     @Test
     public void testNormalFunctionCall() throws TypeErrorException {
         // int blah(int x, bool y) {
@@ -441,9 +453,9 @@ public class TypecheckerScopeTest {
                                                  new VariableDeclaration(new BoolType(), new Variable("y"))),
                                    Arrays.asList(new ReturnStmt(Optional.of(new IntegerLiteralExp(7)))));
         final FunctionDefinition foo =
-            voidFunction(new ExpStmt(new FunctionCallExp(new FunctionName("blah"),
-                                                         Arrays.asList(new IntegerLiteralExp(7),
-                                                                       new BooleanLiteralExp(true)))));
+            voidFunction(new ExpStmt(directCall(new FunctionName("blah"),
+                                                Arrays.asList(new IntegerLiteralExp(7),
+                                                              new BooleanLiteralExp(true)))));
         final Program prog = new Program(EMPTY_STRUCTURES,
                                          Arrays.asList(blah, foo));
         Typechecker.typecheckProgram(prog);
@@ -544,8 +556,8 @@ public class TypecheckerScopeTest {
                                                  new VariableDeclaration(new BoolType(), new Variable("y"))),
                                    Arrays.asList(new ReturnStmt(Optional.of(new IntegerLiteralExp(7)))));
         final FunctionDefinition foo =
-            voidFunction(new ExpStmt(new FunctionCallExp(new FunctionName("blah"),
-                                                         Arrays.asList(new IntegerLiteralExp(7)))));
+            voidFunction(new ExpStmt(directCall(new FunctionName("blah"),
+                                                Arrays.asList(new IntegerLiteralExp(7)))));
         final Program prog = new Program(EMPTY_STRUCTURES,
                                          Arrays.asList(blah, foo));
         Typechecker.typecheckProgram(prog);
@@ -567,10 +579,10 @@ public class TypecheckerScopeTest {
                                                  new VariableDeclaration(new BoolType(), new Variable("y"))),
                                    Arrays.asList(new ReturnStmt(Optional.of(new IntegerLiteralExp(7)))));
         final FunctionDefinition foo =
-            voidFunction(new ExpStmt(new FunctionCallExp(new FunctionName("blah"),
-                                                         Arrays.asList(new IntegerLiteralExp(7),
-                                                                       new BooleanLiteralExp(true),
-                                                                       new BooleanLiteralExp(true)))));
+            voidFunction(new ExpStmt(directCall(new FunctionName("blah"),
+                                                Arrays.asList(new IntegerLiteralExp(7),
+                                                              new BooleanLiteralExp(true),
+                                                              new BooleanLiteralExp(true)))));
         final Program prog = new Program(EMPTY_STRUCTURES,
                                          Arrays.asList(blah, foo));
         Typechecker.typecheckProgram(prog);
@@ -592,9 +604,9 @@ public class TypecheckerScopeTest {
                                                  new VariableDeclaration(new BoolType(), new Variable("y"))),
                                    Arrays.asList(new ReturnStmt(Optional.of(new IntegerLiteralExp(7)))));
         final FunctionDefinition foo =
-            voidFunction(new ExpStmt(new FunctionCallExp(new FunctionName("blah"),
-                                                         Arrays.asList(new BooleanLiteralExp(true),
-                                                                       new IntegerLiteralExp(5)))));
+            voidFunction(new ExpStmt(directCall(new FunctionName("blah"),
+                                                Arrays.asList(new BooleanLiteralExp(true),
+                                                              new IntegerLiteralExp(5)))));
         final Program prog = new Program(EMPTY_STRUCTURES,
                                          Arrays.asList(blah, foo));
         Typechecker.typecheckProgram(prog);
@@ -607,9 +619,9 @@ public class TypecheckerScopeTest {
         // }
 
         final FunctionDefinition foo =
-            voidFunction(new ExpStmt(new FunctionCallExp(new FunctionName("blah"),
-                                                         Arrays.asList(new IntegerLiteralExp(7),
-                                                                       new BooleanLiteralExp(true)))));
+            voidFunction(new ExpStmt(directCall(new FunctionName("blah"),
+                                                Arrays.asList(new IntegerLiteralExp(7),
+                                                              new BooleanLiteralExp(true)))));
         final Program prog = new Program(EMPTY_STRUCTURES,
                                          Arrays.asList(foo));
         Typechecker.typecheckProgram(prog);

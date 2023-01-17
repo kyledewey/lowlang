@@ -228,7 +228,7 @@ public class Typechecker {
             return new BoolType();
         } else {
             // should be no other operators
-            assert(false);
+            assert false : "Unknown operator: " + op.toString();
             throw new TypeErrorException("Unknown operator: " + op.toString());
         }
     } // binopType
@@ -346,7 +346,7 @@ public class Typechecker {
             } else if (lhs instanceof DereferenceLhs) {
                 return typeofDereferenceLhs((DereferenceLhs)lhs);
             } else {
-                assert(false);
+                assert false : "Unknown lhs: " + lhs.toString();
                 throw new TypeErrorException("Unknown lhs: " + lhs.toString());
             }
         }
@@ -477,7 +477,7 @@ public class Typechecker {
                 asAccess.expStructure = Optional.of(((StructureType)expType).name);
                 return retval;
             } else {
-                assert(false);
+                assert false : "Unknown exp: " + exp.toString();
                 throw new TypeErrorException("Unrecognized expression: " + exp.toString());
             }
         } // typeofExp
@@ -574,7 +574,7 @@ public class Typechecker {
                 asPrint.expType = Optional.of(expType);
                 return new Pair<InScope, Boolean>(this, Boolean.valueOf(false));
             } else {
-                assert(false);
+                assert false : "Unknown stmt: " + stmt.toString();
                 throw new TypeErrorException("Unrecognized statement: " + stmt.toString());
             }
         } // typecheckStmt

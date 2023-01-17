@@ -57,6 +57,14 @@ public class MIPSCodeGeneratorStatementTest extends MIPSCodeGeneratorTestBase<St
         return new BlockStmt(Arrays.asList(stmts));
     }
 
+    public static CallLikeExp makeStructure(final StructureName structureName,
+                                            final List<Exp> params) {
+        final CallLikeExp retval = new CallLikeExp(new VariableExp(new Variable(structureName.name)),
+                                                   params);
+        retval.resolution = Optional.of(new MakeStructureResolved(structureName));
+        return retval;
+    }
+
     public static PrintStmt printVar(final String varName) {
         return new PrintStmt(new VariableExp(new Variable(varName)));
     }
@@ -121,9 +129,9 @@ public class MIPSCodeGeneratorStatementTest extends MIPSCodeGeneratorTestBase<St
         assertResult(1,
                      stmts(vardec("x",
                                   new StructureType(structName),
-                                  new MakeStructureExp(structName,
-                                                       Arrays.asList(new IntegerLiteralExp(1),
-                                                                     new IntegerLiteralExp(2)))),
+                                  makeStructure(structName,
+                                                Arrays.asList(new IntegerLiteralExp(1),
+                                                              new IntegerLiteralExp(2)))),
                            new PrintStmt(access)),
                      TWO_INTS);
     }
@@ -137,9 +145,9 @@ public class MIPSCodeGeneratorStatementTest extends MIPSCodeGeneratorTestBase<St
         assertResult(2,
                      stmts(vardec("x",
                                   new StructureType(structName),
-                                  new MakeStructureExp(structName,
-                                                       Arrays.asList(new IntegerLiteralExp(1),
-                                                                     new IntegerLiteralExp(2)))),
+                                  makeStructure(structName,
+                                                Arrays.asList(new IntegerLiteralExp(1),
+                                                              new IntegerLiteralExp(2)))),
                            new PrintStmt(access)),
                      TWO_INTS);
     }
@@ -153,13 +161,13 @@ public class MIPSCodeGeneratorStatementTest extends MIPSCodeGeneratorTestBase<St
         assertResult(3,
                      stmts(vardec("x",
                                   new StructureType(structName),
-                                  new MakeStructureExp(structName,
-                                                       Arrays.asList(new IntegerLiteralExp(1),
-                                                                     new IntegerLiteralExp(2)))),
+                                  makeStructure(structName,
+                                                Arrays.asList(new IntegerLiteralExp(1),
+                                                              new IntegerLiteralExp(2)))),
                            assign("x",
-                                  new MakeStructureExp(structName,
-                                                       Arrays.asList(new IntegerLiteralExp(3),
-                                                                     new IntegerLiteralExp(4)))),
+                                  makeStructure(structName,
+                                                Arrays.asList(new IntegerLiteralExp(3),
+                                                              new IntegerLiteralExp(4)))),
                            new PrintStmt(access)),
                      TWO_INTS);
     }
@@ -173,13 +181,13 @@ public class MIPSCodeGeneratorStatementTest extends MIPSCodeGeneratorTestBase<St
         assertResult(4,
                      stmts(vardec("x",
                                   new StructureType(structName),
-                                  new MakeStructureExp(structName,
-                                                       Arrays.asList(new IntegerLiteralExp(1),
-                                                                     new IntegerLiteralExp(2)))),
+                                  makeStructure(structName,
+                                                Arrays.asList(new IntegerLiteralExp(1),
+                                                              new IntegerLiteralExp(2)))),
                            assign("x",
-                                  new MakeStructureExp(structName,
-                                                       Arrays.asList(new IntegerLiteralExp(3),
-                                                                     new IntegerLiteralExp(4)))),
+                                  makeStructure(structName,
+                                                Arrays.asList(new IntegerLiteralExp(3),
+                                                              new IntegerLiteralExp(4)))),
                            new PrintStmt(access)),
                      TWO_INTS);
     }
@@ -198,9 +206,9 @@ public class MIPSCodeGeneratorStatementTest extends MIPSCodeGeneratorTestBase<St
         assertResult(3,
                      stmts(vardec("x",
                                   new StructureType(twoInts),
-                                  new MakeStructureExp(twoInts,
-                                                       Arrays.asList(new IntegerLiteralExp(1),
-                                                                     new IntegerLiteralExp(2)))),
+                                  makeStructure(twoInts,
+                                                Arrays.asList(new IntegerLiteralExp(1),
+                                                              new IntegerLiteralExp(2)))),
                            assign(accessLhs,new IntegerLiteralExp(3)),
                            new PrintStmt(accessExp)),
                      TWO_INTS);
@@ -220,9 +228,9 @@ public class MIPSCodeGeneratorStatementTest extends MIPSCodeGeneratorTestBase<St
         assertResult(3,
                      stmts(vardec("x",
                                   new StructureType(twoInts),
-                                  new MakeStructureExp(twoInts,
-                                                       Arrays.asList(new IntegerLiteralExp(1),
-                                                                     new IntegerLiteralExp(2)))),
+                                  makeStructure(twoInts,
+                                                Arrays.asList(new IntegerLiteralExp(1),
+                                                              new IntegerLiteralExp(2)))),
                            assign(accessLhs, new IntegerLiteralExp(3)),
                            new PrintStmt(accessExp)),
                      TWO_INTS);
@@ -250,26 +258,26 @@ public class MIPSCodeGeneratorStatementTest extends MIPSCodeGeneratorTestBase<St
                            // first = TwoInts(1, 2)
                            vardec("first",
                                   new StructureType(twoInts),
-                                  new MakeStructureExp(twoInts,
-                                                       Arrays.asList(new IntegerLiteralExp(1),
-                                                                     new IntegerLiteralExp(2)))),
+                                  makeStructure(twoInts,
+                                                Arrays.asList(new IntegerLiteralExp(1),
+                                                              new IntegerLiteralExp(2)))),
                            // second = TwoInts(3, 4)
                            vardec("second",
                                   new StructureType(twoInts),
-                                  new MakeStructureExp(twoInts,
-                                                       Arrays.asList(new IntegerLiteralExp(3),
-                                                                     new IntegerLiteralExp(4)))),
+                                  makeStructure(twoInts,
+                                                Arrays.asList(new IntegerLiteralExp(3),
+                                                              new IntegerLiteralExp(4)))),
                            // x = FourInts(first, second)
                            vardec("x",
                                   new StructureType(fourInts),
-                                  new MakeStructureExp(fourInts,
-                                                       Arrays.asList(new VariableExp(new Variable("first")),
-                                                                     new VariableExp(new Variable("second"))))),
+                                  makeStructure(fourInts,
+                                                Arrays.asList(new VariableExp(new Variable("first")),
+                                                              new VariableExp(new Variable("second"))))),
                            // x.first = TwoInts(5, 6)
                            assign(accessLhs,
-                                  new MakeStructureExp(twoInts,
-                                                       Arrays.asList(new IntegerLiteralExp(5),
-                                                                     new IntegerLiteralExp(6)))),
+                                  makeStructure(twoInts,
+                                                Arrays.asList(new IntegerLiteralExp(5),
+                                                              new IntegerLiteralExp(6)))),
                            // print(x.first.x)
                            new PrintStmt(accessX)),
                      DOUBLE_TWO_INTS);
@@ -297,26 +305,26 @@ public class MIPSCodeGeneratorStatementTest extends MIPSCodeGeneratorTestBase<St
                            // first = TwoInts(1, 2)
                            vardec("first",
                                   new StructureType(twoInts),
-                                  new MakeStructureExp(twoInts,
-                                                       Arrays.asList(new IntegerLiteralExp(1),
-                                                                     new IntegerLiteralExp(2)))),
+                                  makeStructure(twoInts,
+                                                Arrays.asList(new IntegerLiteralExp(1),
+                                                              new IntegerLiteralExp(2)))),
                            // second = TwoInts(3, 4)
                            vardec("second",
                                   new StructureType(twoInts),
-                                  new MakeStructureExp(twoInts,
-                                                       Arrays.asList(new IntegerLiteralExp(3),
-                                                                     new IntegerLiteralExp(4)))),
+                                  makeStructure(twoInts,
+                                                Arrays.asList(new IntegerLiteralExp(3),
+                                                              new IntegerLiteralExp(4)))),
                            // x = FourInts(first, second)
                            vardec("x",
                                   new StructureType(fourInts),
-                                  new MakeStructureExp(fourInts,
-                                                       Arrays.asList(new VariableExp(new Variable("first")),
-                                                                     new VariableExp(new Variable("second"))))),
+                                  makeStructure(fourInts,
+                                                Arrays.asList(new VariableExp(new Variable("first")),
+                                                              new VariableExp(new Variable("second"))))),
                            // x.second = TwoInts(5, 6)
                            assign(accessLhs,
-                                  new MakeStructureExp(twoInts,
-                                                       Arrays.asList(new IntegerLiteralExp(5),
-                                                                     new IntegerLiteralExp(6)))),
+                                  makeStructure(twoInts,
+                                                Arrays.asList(new IntegerLiteralExp(5),
+                                                              new IntegerLiteralExp(6)))),
                            // print(x.second.x)
                            new PrintStmt(accessX)),
                      DOUBLE_TWO_INTS);
@@ -370,9 +378,9 @@ public class MIPSCodeGeneratorStatementTest extends MIPSCodeGeneratorTestBase<St
         assertResult(3,
                      stmts(vardec("x",
                                   new StructureType(structName),
-                                  new MakeStructureExp(structName,
-                                                       Arrays.asList(new IntegerLiteralExp(1),
-                                                                     new IntegerLiteralExp(2)))),
+                                  makeStructure(structName,
+                                                Arrays.asList(new IntegerLiteralExp(1),
+                                                              new IntegerLiteralExp(2)))),
                            vardec("p",
                                   new PointerType(new IntType()),
                                   addressOfData(accessLhs)),
@@ -402,9 +410,9 @@ public class MIPSCodeGeneratorStatementTest extends MIPSCodeGeneratorTestBase<St
         assertResult(3,
                      stmts(vardec("x",
                                   new StructureType(structName),
-                                  new MakeStructureExp(structName,
-                                                       Arrays.asList(new IntegerLiteralExp(1),
-                                                                     new IntegerLiteralExp(2)))),
+                                  makeStructure(structName,
+                                                Arrays.asList(new IntegerLiteralExp(1),
+                                                              new IntegerLiteralExp(2)))),
                            vardec("p",
                                   new PointerType(new IntType()),
                                   addressOfData(accessLhs)),
@@ -431,16 +439,16 @@ public class MIPSCodeGeneratorStatementTest extends MIPSCodeGeneratorTestBase<St
         assertResult(3,
                      stmts(vardec("x",
                                   new StructureType(structName),
-                                  new MakeStructureExp(structName,
-                                                       Arrays.asList(new IntegerLiteralExp(1),
-                                                                     new IntegerLiteralExp(2)))),
+                                  makeStructure(structName,
+                                                Arrays.asList(new IntegerLiteralExp(1),
+                                                              new IntegerLiteralExp(2)))),
                            vardec("p",
                                   new PointerType(new StructureType(structName)),
                                   addressOfData(new VariableLhs(new Variable("x")))),
                            assign(deref,
-                                  new MakeStructureExp(structName,
-                                                       Arrays.asList(new IntegerLiteralExp(3),
-                                                                     new IntegerLiteralExp(4)))),
+                                  makeStructure(structName,
+                                                Arrays.asList(new IntegerLiteralExp(3),
+                                                              new IntegerLiteralExp(4)))),
                            new PrintStmt(accessExp)),
                      TWO_INTS);
     }
@@ -469,20 +477,20 @@ public class MIPSCodeGeneratorStatementTest extends MIPSCodeGeneratorTestBase<St
         assertResult(6,
                      stmts(vardec("x",
                                   new StructureType(fourInts),
-                                  new MakeStructureExp(fourInts,
-                                                       Arrays.asList(new MakeStructureExp(twoInts,
-                                                                                          Arrays.asList(new IntegerLiteralExp(1),
-                                                                                                        new IntegerLiteralExp(2))),
-                                                                     new MakeStructureExp(twoInts,
-                                                                                          Arrays.asList(new IntegerLiteralExp(3),
-                                                                                                        new IntegerLiteralExp(4)))))),
+                                  makeStructure(fourInts,
+                                                   Arrays.asList(makeStructure(twoInts,
+                                                                               Arrays.asList(new IntegerLiteralExp(1),
+                                                                                             new IntegerLiteralExp(2))),
+                                                                 makeStructure(twoInts,
+                                                                               Arrays.asList(new IntegerLiteralExp(3),
+                                                                                             new IntegerLiteralExp(4)))))),
                            vardec("p",
                                   new PointerType(new StructureType(twoInts)),
                                   addressOfData(accessFirstLhs)),
                            assign(deref,
-                                  new MakeStructureExp(twoInts,
-                                                       Arrays.asList(new IntegerLiteralExp(5),
-                                                                     new IntegerLiteralExp(6)))),
+                                  makeStructure(twoInts,
+                                                Arrays.asList(new IntegerLiteralExp(5),
+                                                              new IntegerLiteralExp(6)))),
                            new PrintStmt(accessYExp)),
                      DOUBLE_TWO_INTS);
     }
@@ -511,20 +519,20 @@ public class MIPSCodeGeneratorStatementTest extends MIPSCodeGeneratorTestBase<St
         assertResult(5,
                      stmts(vardec("x",
                                   new StructureType(fourInts),
-                                  new MakeStructureExp(fourInts,
-                                                       Arrays.asList(new MakeStructureExp(twoInts,
-                                                                                          Arrays.asList(new IntegerLiteralExp(1),
-                                                                                                        new IntegerLiteralExp(2))),
-                                                                     new MakeStructureExp(twoInts,
-                                                                                          Arrays.asList(new IntegerLiteralExp(3),
-                                                                                                        new IntegerLiteralExp(4)))))),
+                                  makeStructure(fourInts,
+                                                Arrays.asList(makeStructure(twoInts,
+                                                                            Arrays.asList(new IntegerLiteralExp(1),
+                                                                                          new IntegerLiteralExp(2))),
+                                                              makeStructure(twoInts,
+                                                                            Arrays.asList(new IntegerLiteralExp(3),
+                                                                                          new IntegerLiteralExp(4)))))),
                            vardec("p",
                                   new PointerType(new StructureType(twoInts)),
                                   addressOfData(accessSecondLhs)),
                            assign(deref,
-                                  new MakeStructureExp(twoInts,
-                                                       Arrays.asList(new IntegerLiteralExp(5),
-                                                                     new IntegerLiteralExp(6)))),
+                                  makeStructure(twoInts,
+                                                Arrays.asList(new IntegerLiteralExp(5),
+                                                              new IntegerLiteralExp(6)))),
                            new PrintStmt(accessYExp)),
                      DOUBLE_TWO_INTS);
     }
@@ -567,9 +575,9 @@ public class MIPSCodeGeneratorStatementTest extends MIPSCodeGeneratorTestBase<St
         assertResult(2,
                      stmts(vardec("x",
                                   new StructureType(twoInts),
-                                  new MakeStructureExp(twoInts,
-                                                       Arrays.asList(new IntegerLiteralExp(1),
-                                                                     new IntegerLiteralExp(2)))),
+                                  makeStructure(twoInts,
+                                                Arrays.asList(new IntegerLiteralExp(1),
+                                                              new IntegerLiteralExp(2)))),
                            vardec("p",
                                   new PointerType(new StructureType(twoInts)),
                                   addressOfData(new VariableLhs(new Variable("x")))),
@@ -733,9 +741,9 @@ public class MIPSCodeGeneratorStatementTest extends MIPSCodeGeneratorTestBase<St
         // }
 
         final StructureName twoInts = new StructureName("TwoInts");
-        final FieldAccessExp access = new FieldAccessExp(new MakeStructureExp(twoInts,
-                                                                              Arrays.asList(new IntegerLiteralExp(1),
-                                                                                            new IntegerLiteralExp(2))),
+        final FieldAccessExp access = new FieldAccessExp(makeStructure(twoInts,
+                                                                       Arrays.asList(new IntegerLiteralExp(1),
+                                                                                     new IntegerLiteralExp(2))),
                                                          new FieldName("x"));
         access.expStructure = Optional.of(twoInts);
         
@@ -758,9 +766,9 @@ public class MIPSCodeGeneratorStatementTest extends MIPSCodeGeneratorTestBase<St
         // }
 
         final StructureName twoInts = new StructureName("TwoInts");
-        final FieldAccessExp access = new FieldAccessExp(new MakeStructureExp(twoInts,
-                                                                              Arrays.asList(new IntegerLiteralExp(1),
-                                                                                            new IntegerLiteralExp(2))),
+        final FieldAccessExp access = new FieldAccessExp(makeStructure(twoInts,
+                                                                       Arrays.asList(new IntegerLiteralExp(1),
+                                                                                     new IntegerLiteralExp(2))),
                                                          new FieldName("x"));
         access.expStructure = Optional.of(twoInts);
         
