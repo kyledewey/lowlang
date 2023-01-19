@@ -63,6 +63,7 @@ public class MIPSCodeGeneratorFunctionTest extends MIPSCodeGeneratorTestBase<Fun
                                       new ArrayList<VariableDeclaration>(),
                                       Arrays.asList(stmt));
     }
+
     @Test
     public void testPrintConstantExplicitReturn() throws IOException {
         assertResultF(1,

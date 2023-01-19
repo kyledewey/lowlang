@@ -146,6 +146,7 @@ public class CodegenTest {
     }
     // ---END TESTS FOR EXPRESSIONS---
 
+    // ---BEGIN TESTS FOR STATEMENTS---
     @Test
     public void testStructureAccessSingleField() throws Exception {
         assertResult("struct Foo { int x; };" +
@@ -193,13 +194,15 @@ public class CodegenTest {
     }
 
     @Test
-    public void testDoubleIntVariableDeclarationGetFirst() throws Exception {
+    public void testDoubleIntVariableDeclaration() throws Exception {
         assertResult("void main() {" +
                      "  int x = 1;" +
                      "  int y = 2;" +
                      "  print(x);" +
+                     "  print(y);" +
                      "}",
-                     1);
+                     1,
+                     2);
     }
 
     @Test
@@ -638,4 +641,116 @@ public class CodegenTest {
                      5,
                      25);
     }
+    // ---END TESTS FOR STATEMENTS---
+
+    // ---BEGIN TESTS FOR FUNCTIONS---
+    @Test
+    public void testPrintConstantExplicitReturn() throws Exception {
+        assertResult("void main() { print(1); return; }",
+                     1);
+    }
+
+    @Test
+    public void testPrintConstantImplicitReturn() throws Exception {
+        assertResult("void main() { print(1); }",
+                     1);
+    }
+
+    @Test
+    public void testCallFunctionReturnsConstantInt() throws Exception {
+        assertResult("int foo() { return 1; }" +
+                     "void main() { print(foo()); }",
+                     1);
+    }
+
+    @Test
+    public void testCallFunctionAddsParams() throws Exception {
+        assertResult("int foo(int x, int y) { return x + y; }" +
+                     "void main() { print(foo(1, 2)); }",
+                     3);
+    }
+
+    @Test
+    public void testReturnStructureConstantGetFirst() throws Exception {
+        assertResult("struct TwoInts { int x; int y; };" +
+                     "TwoInts foo() { return TwoInts(1, 2); }" +
+                     "void main() { print(foo().x); }",
+                     1);
+    }
+
+    @Test
+    public void testReturnStructureConstantGetSecond() throws Exception {
+        assertResult("struct TwoInts { int x; int y; };" +
+                     "TwoInts foo() { return TwoInts(1, 2); }" +
+                     "void main() { print(foo().y); }",
+                     2);
+    }
+
+    @Test
+    public void testReturnStructureParamsGetFirst() throws Exception {
+        assertResult("struct TwoInts { int x; int y; };" +
+                     "TwoInts foo(int a, int b) { return TwoInts(a, b); }" +
+                     "void main() { print(foo(1, 2).x); }",
+                     1);
+    }
+
+    @Test
+    public void testReturnStructureParamsGetSecond() throws Exception {
+        assertResult("struct TwoInts { int x; int y; };" +
+                     "TwoInts foo(int a, int b) { return TwoInts(a, b); }" +
+                     "void main() { print(foo(1, 2).y); }",
+                     2);
+    }
+
+    @Test
+    public void testCanTakeStructureGetFirst() throws Exception {
+        assertResult("struct TwoInts { int x; int y; };" +
+                     "void foo(TwoInts s) { print(s.x); }" +
+                     "void main() { foo(TwoInts(1, 2)); }",
+                     1);
+    }
+
+    @Test
+    public void testCanTakeStructureGetSecond() throws Exception {
+        assertResult("struct TwoInts { int x; int y; };" +
+                     "void foo(TwoInts s) { print(s.y); }" +
+                     "void main() { foo(TwoInts(1, 2)); }",
+                     2);
+    }
+
+    @Test
+    public void testCanTakeMultipleStructures() throws Exception {
+        assertResult("struct TwoInts { int x; int y; };" +
+                     "struct FourInts { TwoInts first; TwoInts second; };" +
+                     "FourInts foo(TwoInts x, TwoInts y) {" +
+                     "  return FourInts(x, y);" +
+                     "}" +
+                     "void main() {" +
+                     "  FourInts f = foo(TwoInts(1, 2), TwoInts(3, 4));" +
+                     "  print(f.first.x);" +
+                     "  print(f.first.y);" +
+                     "  print(f.second.x);" +
+                     "  print(f.second.y);" +
+                     "}",
+                     1,
+                     2,
+                     3,
+                     4);
+    }
+
+    @Test
+    public void testFibonacci() throws Exception {
+        assertResult("int fib(int x) {" +
+                     "  if (x == 0) {" +
+                     "    return 0;" +
+                     "  } else if (x == 1) {" +
+                     "    return 1;" +
+                     "  } else {" +
+                     "    return fib(x - 1) + fib(x - 2);" +
+                     "  }" +
+                     "}" +
+                     "void main() { print(fib(7)); }",
+                     13);
+    }
+    // ---END TESTS FOR FUNCTIONS---
 }
