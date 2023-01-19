@@ -752,5 +752,70 @@ public class CodegenTest {
                      "void main() { print(fib(7)); }",
                      13);
     }
+
+    @Test
+    public void testIndirectCallSingleFunction() throws Exception {
+        assertResult("void printOne() { print(1); }" +
+                     "void main() {" +
+                     "   () => void f = &printOne;" +
+                     "   f();" +
+                     "   print(2);" +
+                     "}",
+                     1,
+                     2);
+    }
+
+    @Test
+    public void testIndirectCallReturnsInt() throws Exception {
+        assertResult("int returnsOne() { return 1; }" +
+                     "void main() {" +
+                     "   () => int f = &returnsOne;" +
+                     "   print(f());" +
+                     "}",
+                     1);
+    }
+
+    @Test
+    public void testIndirectCallReturnsStruct() throws Exception {
+        assertResult("struct TwoInts { int x; int y; };" +
+                     "TwoInts returnsStruct() { return TwoInts(1, 2); }" +
+                     "void main() {" +
+                     "   () => TwoInts f = &returnsStruct;" +
+                     "   TwoInts pair = f();" +
+                     "   print(pair.x);" +
+                     "   print(pair.y);" +
+                     "}",
+                     1,
+                     2);
+    }
+
+    @Test
+    public void testIndirectCallReturnsStructTakesParams() throws Exception {
+        assertResult("struct TwoInts { int x; int y; };" +
+                     "TwoInts returnsStruct(int x, int y) { return TwoInts(x, y); }" +
+                     "void main() {" +
+                     "   (int, int) => TwoInts f = &returnsStruct;" +
+                     "   TwoInts pair = f(1, 2);" +
+                     "   print(pair.x);" +
+                     "   print(pair.y);" +
+                     "}",
+                     1,
+                     2);
+    }
+
+                         
+    @Test
+    public void testIndirectCallTwoFunctions() throws Exception {
+        assertResult("int add(int x, int y) { return x + y; }" +
+                     "int sub(int x, int y) { return x - y; }" +
+                     "void main() {" +
+                     "  (int, int) => int f = &add;" +
+                     "  print(f(1, 2));" +
+                     "  f = &sub;" +
+                     "  print(f(5, 1));" +
+                     "}",
+                     3,
+                     4);
+    }
     // ---END TESTS FOR FUNCTIONS---
 }

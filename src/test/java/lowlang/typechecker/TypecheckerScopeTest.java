@@ -400,4 +400,16 @@ public class TypecheckerScopeTest {
     public void testPrint() throws TokenizerException, ParseException, TypeErrorException {
         typechecks("void main() { print(1); }");
     }
+
+    @Test
+    public void testIndirectCall() throws TokenizerException, ParseException, TypeErrorException {
+        typechecks("int add(int x, int y) { return x + y; }" +
+                   "int sub(int x, int y) { return x - y; }" +
+                   "void main() {" +
+                   "  (int, int) => int f = &add;" +
+                   "  print(f(1, 2));" +
+                   "  f = &sub;" +
+                   "  print(f(5, 1));" +
+                   "}");
+    }
 }

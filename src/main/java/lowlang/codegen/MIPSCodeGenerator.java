@@ -827,13 +827,17 @@ public class MIPSCodeGenerator {
         // wanted stack:
         // - return value - low address ($sp)
         // - stack beforehand - high address
-        // 
-        // can shift everything down with a copy
+        //
+        // Shift the return value down over the base.  We start at the
+        // word at the highest address of the return value, and copy
+        // it over one word ahead in memory.
         final int returnTypeSize = sizeof(functionType.returnType);
         for (int difference = returnTypeSize; difference > 0; difference -= 4) {
-            add(new Lw(t0, difference, sp));
-            add(new Sw(t0, difference + 4, sp));
+            add(new Lw(t0, difference - 4, sp));
+            add(new Sw(t0, difference, sp));
         }
+
+        // base has been removed from the stack
         add(new Addi(sp, sp, 4));
 
         // return value is on stack
