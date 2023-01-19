@@ -244,15 +244,15 @@ public class CodegenTest {
     //                  3);
     // }
 
-    // @Test
-    // public void testDeclareStructureGetFirst() throws Exception {
-    //     assertResult("struct TwoInts { int x; int y; };" +
-    //                  "void main() {" +
-    //                  "  TwoInts x = TwoInts(1, 2);" +
-    //                  "  print(x.x);" +
-    //                  "}",
-    //                  1);
-    // }
+    @Test
+    public void testDeclareStructureGetFirst() throws Exception {
+        assertResult("struct TwoInts { int x; int y; };" +
+                     "void main() {" +
+                     "  TwoInts x = TwoInts(1, 2);" +
+                     "  print(x.x);" +
+                     "}",
+                     1);
+    }
 
     // @Test
     // public void testDeclareStructureGetSecond() throws Exception {
@@ -371,17 +371,17 @@ public class CodegenTest {
     //                  3);
     // }
 
-    // @Test
-    // public void testAssignStructureThroughPointer() throws Exception {
-    //     assertResult("struct TwoInts { int x; int y; };" +
-    //                  "void main() {" +
-    //                  "  TwoInts x = TwoInts(1, 2);" +
-    //                  "  TwoInts* p = &x;" +
-    //                  "  *p = TwoInts(3, 4);" +
-    //                  "  print(x.x);" +
-    //                  "}",
-    //                  3);
-    // }
+    @Test
+    public void testAssignStructureThroughPointer() throws Exception {
+        assertResult("struct TwoInts { int x; int y; };" +
+                     "void main() {" +
+                     "  TwoInts x = TwoInts(1, 2);" +
+                     "  TwoInts* p = &x;" +
+                     "  *p = TwoInts(3, 4);" +
+                     "  print(x.x);" +
+                     "}",
+                     3);
+    }
 
     // @Test
     // public void testAssignNestedStructureThroughPointerFirst() throws Exception {

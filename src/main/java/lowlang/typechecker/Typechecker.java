@@ -291,15 +291,15 @@ public class Typechecker {
         }
 
         private Type typeofDereferenceLhs(final DereferenceLhs lhs) throws TypeErrorException {
-            final Type nested = typeofLhs(lhs.lhs);
+            final Type nested = typeofDereference(typeofLhs(lhs.lhs));
             lhs.typeAfterDereference = Optional.of(nested);
-            return typeofDereference(nested);
+            return nested;
         }
         
         private Type typeofDereferenceExp(final DereferenceExp exp) throws TypeErrorException {
-            final Type nested = typeofExp(exp.exp);
+            final Type nested = typeofDereference(typeofExp(exp.exp));
             exp.typeAfterDereference = Optional.of(nested);
-            return typeofDereference(nested);
+            return nested;
         }
         
         private Type typeofDereference(final Type maybePointerType) throws TypeErrorException {

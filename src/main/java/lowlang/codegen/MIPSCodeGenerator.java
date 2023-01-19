@@ -358,9 +358,14 @@ public class MIPSCodeGenerator {
 
         // establish where we're going to copy
         final int size = lhsSize(stmt.lhs);
+        assert(size > 0);
         assert(size % 4 == 0);
         final MIPSRegister t0 = MIPSRegister.T0;
-        add(new MIPSComment("address of lhs into $t0"));
+        add(new MIPSComment("address of " +
+                            stmt.lhs.toString() +
+                            " (size " +
+                            size +
+                            ") into $t0"));
         
         putLhsAddressIntoRegister(t0, stmt.lhs);
         resetExpressionOffset();
@@ -369,7 +374,7 @@ public class MIPSCodeGenerator {
         final MIPSRegister sp = MIPSRegister.SP;
         for (int base = 0; base < size; base += 4) {
             final MIPSRegister t1 = MIPSRegister.T1;
-            add(new MIPSComment("transfer byte of rhs to lhs"));
+            add(new MIPSComment("transfer byte of rhs to " + stmt.lhs.toString()));
             add(new Lw(t1, base, sp));
             add(new Sw(t1, base, t0));
         }
