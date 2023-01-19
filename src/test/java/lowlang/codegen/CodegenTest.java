@@ -817,5 +817,20 @@ public class CodegenTest {
                      3,
                      4);
     }
+
+    @Test
+    public void testStructLayout() throws Exception {
+        assertResult("struct TwoInts { int x; int y; };" +
+                     "struct FourInts { TwoInts first; TwoInts second; };" +
+                     "void main() {" +
+                     "  FourInts f = FourInts(TwoInts(1, 2), TwoInts(3, 4));" +
+                     "  FourInts* fp = &f;" +
+                     "  TwoInts* p = (TwoInts*)fp;" +
+                     "  print((*p).x);" +
+                     "  print((*p).y);" +
+                     "}",
+                     3,
+                     4);
+    }
     // ---END TESTS FOR FUNCTIONS---
 }
