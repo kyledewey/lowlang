@@ -603,15 +603,6 @@ public class MIPSCodeGenerator {
         expressionOffset += loadSize;
     } // compileDereferenceExp
 
-    // public void compileMakeStructureExp(final MakeStructureExp exp) {
-    //     // each parameter is pushed onto the stack
-    //     // note that by evaluating left-to-right, this means that the
-    //     // _last_ value on the structure will appear on top of the stack
-    //     for (final Exp parameter : exp.parameters) {
-    //         compileExpression(parameter);
-    //     }
-    // } // compileMakeStructureExp
-
     public List<Map.Entry<FieldName, Type>> reverseFieldsFor(final StructureName structName) {
         final LinkedHashMap<FieldName, Type> fields = structDecs.get(structName);
         assert(fields != null);
@@ -843,33 +834,7 @@ public class MIPSCodeGenerator {
         // return value is on stack
         expressionOffset = originalExpressionOffset + returnTypeSize;
     }
-    
-    // public void compileFunctionCallExp(final FunctionCallExp exp) {
-    //     final int originalExpressionOffset = expressionOffset;
 
-    //     // last argument will be on top of the stack
-    //     for (final Exp parameter : exp.parameters) {
-    //         compileExpression(parameter);
-    //     }
-
-    //     add(new Jal(functionNameToLabel(exp.name)));
-
-    //     // return value is on stack
-    //     final int returnTypeSize = sizeof(functionDefs.get(exp.name).returnType);
-    //     expressionOffset = originalExpressionOffset + returnTypeSize;
-    // }
-
-    // public void compileFunctionCallStmt(final FunctionCallStmt stmt) {
-    //     final FunctionCallExp exp = stmt.asExp;
-    //     final int returnTypeSize = sizeof(functionDefs.get(exp.name).returnType);
-    //     compileFunctionCallExp(exp);
-    //     // ignore what's on the stack
-    //     final MIPSRegister sp = MIPSRegister.SP;
-    //     add(new Addi(sp, sp, returnTypeSize));
-    //     expressionOffset -= returnTypeSize;
-    //     assert(expressionOffset >= 0);
-    // }
-    
     public void compileExpression(final Exp exp) {
         if (exp instanceof IntegerLiteralExp) {
             compileIntegerLiteralExp((IntegerLiteralExp)exp);
