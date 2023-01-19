@@ -531,6 +531,13 @@ public class Parser {
             assertTokenHereIs(stmts.nextPosition, new RightCurlyBraceToken());
             return new ParseResult<Stmt>(new BlockStmt(stmts.result),
                                          stmts.nextPosition + 1);
+        } else if (token instanceof PrintToken) {
+            assertTokenHereIs(position + 1, new LeftParenToken());
+            final ParseResult<Exp> exp = parseExp(position + 2);
+            assertTokenHereIs(exp.nextPosition, new RightParenToken());
+            assertTokenHereIs(exp.nextPosition + 1, new SemicolonToken());
+            return new ParseResult<Stmt>(new PrintStmt(exp.result),
+                                         exp.nextPosition + 2);
         } else {
             return parseNonObviousStmt(position);
         }

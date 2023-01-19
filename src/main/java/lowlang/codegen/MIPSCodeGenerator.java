@@ -3,6 +3,7 @@ package lowlang.codegen;
 import lowlang.parser.*;
 
 import java.util.Map;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.ArrayList;
@@ -41,6 +42,36 @@ public class MIPSCodeGenerator {
     private MIPSLabel currentWhileEnd;
     private VariableTableResetPoint currentWhileReset;
     // ---END INSTANCE VARIABLES
+
+    public static Map<StructureName, LinkedHashMap<FieldName, Type>> makeStructDecs(final List<StructureDeclaration> structs) {
+        final Map<StructureName, LinkedHashMap<FieldName, Type>> retval = new HashMap<StructureName, LinkedHashMap<FieldName, Type>>();
+        for (final StructureDeclaration struct : structs) {
+            assert !retval.containsKey(struct.name) : "Typechecker didn't detect duplicate struct: " + struct.name.toString();
+            final LinkedHashMap<FieldName, Type> fields = new LinkedHashMap<FieldName, Type>();
+            for (final VariableDeclaration vardec : struct.fields) {
+                final FieldName fieldName = new FieldName(vardec.variable.name);
+                assert !fields.containsKey(fieldName) : "Typechecker didn't detect duplicate field: " + fieldName.toString();
+                fields.put(fieldName, vardec.type);
+            }
+            retval.put(struct.name, fields);
+        }
+        return retval;
+    }
+
+    public static Map<FunctionName, FunctionDefinition> makeFunctionDefs(final List<FunctionDefinition> functions) {
+        final Map<FunctionName, FunctionDefinition> retval = new HashMap<FunctionName, FunctionDefinition>();
+        for (final FunctionDefinition function : functions) {
+            assert !retval.containsKey(function.name) : "Typechecker didn't detect duplicate function name: " + function.name.toString();
+            retval.put(function.name, function);
+        }
+        return retval;
+    }
+    
+    // assumes the program has undergone typechecking
+    public MIPSCodeGenerator(final Program program) {
+        this(makeStructDecs(program.structDecs),
+             makeFunctionDefs(program.functionDefs));
+    }
     
     public MIPSCodeGenerator(final Map<StructureName, LinkedHashMap<FieldName, Type>> structDecs,
                              final Map<FunctionName, FunctionDefinition> functionDefs) {
@@ -888,5 +919,24 @@ public class MIPSCodeGenerator {
         assert(this.currentFunction == null);
         this.currentFunction = currentFunction;
     } // setCurrentFunctionForTesting
+
+    public void compile(final File outputFile) throws IOException {
+        // main needs to be first, so we can fall into it
+        final FunctionName mainName = new FunctionName("main");
+        assert functionDefs.containsKey(mainName) : "Missing main function";
+        compileMainFunctionDefinition(functionDefs.get(mainName));
+        for (final FunctionDefinition def : functionDefs.values()) {
+            if (!def.name.equals(mainName)) {
+                compileFunctionDefinition(def);
+            }
+        }
+        writeCompleteFile(outputFile);
+    }
+    
+    // assumes the program has undergone typechecking
+    public static void compile(final Program program,
+                               final File outputFile) throws IOException {
+        new MIPSCodeGenerator(program).compile(outputFile);
+    }
 } // MIPSCodeGenerator
 

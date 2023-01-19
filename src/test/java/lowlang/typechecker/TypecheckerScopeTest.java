@@ -395,4 +395,9 @@ public class TypecheckerScopeTest {
                    "  if (true) { return 1; } else { return 2; }" +
                    "}");
     }
+
+    @Test
+    public void testPrint() throws TokenizerException, ParseException, TypeErrorException {
+        typechecks("void main() { print(1); }");
+    }
 }
