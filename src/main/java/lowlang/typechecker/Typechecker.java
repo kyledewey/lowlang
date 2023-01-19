@@ -49,11 +49,7 @@ public class Typechecker {
                                         new ArrayList<FunctionDefinition>()));
         return checker.expTypeNoScopeForTesting(exp);
     }
-    
-    public static void typecheckProgram(final Program program) throws TypeErrorException {
-        new Typechecker(program);
-    }
-    
+        
     // not permitted to have multiple functions with the same name
     // not permitted to have a function with the same name as a struct
     private Map<FunctionName, Pair<List<Type>, Type>>
@@ -579,5 +575,17 @@ public class Typechecker {
             }
         } // typecheckStmt
     } // InScope
+
+    // skips check for main
+    public static void typecheckProgramForTesting(final Program program) throws TypeErrorException {
+        new Typechecker(program);
+    }
+
+    public static void typecheckProgramExternalEntry(final Program program) throws TypeErrorException {
+        final Typechecker typechecker = new Typechecker(program);
+        if (!typechecker.functionDefs.containsKey(new FunctionName("main"))) {
+            throw new TypeErrorException("Missing void main() definition");
+        }
+    }
 }
 

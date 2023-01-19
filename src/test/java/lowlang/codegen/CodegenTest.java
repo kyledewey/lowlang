@@ -33,7 +33,7 @@ public class CodegenTest {
         boolean wantToSaveFile = true; // for debugging
 
         final Program program = Parser.parse(Tokenizer.tokenize(programAsString));
-        Typechecker.typecheckProgram(program);
+        Typechecker.typecheckProgramExternalEntry(program);
         final File file = File.createTempFile(name.getMethodName(),
                                               ".asm",
                                               new File("testPrograms"));

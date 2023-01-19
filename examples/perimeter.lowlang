@@ -1,0 +1,15 @@
+struct Rectangle {
+  int length;
+  int width;
+};
+
+int getPerimeter(Rectangle r) {
+  return 2 * (r.length + r.width);
+}
+
+void main() {
+  Rectangle r1 = Rectangle(2, 3);
+  Rectangle r2 = Rectangle(3, 4);
+  print(getPerimeter(r1));
+  print(getPerimeter(r2));
+}

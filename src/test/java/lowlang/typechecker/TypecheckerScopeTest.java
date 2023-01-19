@@ -13,7 +13,7 @@ import org.junit.Test;
 
 public class TypecheckerScopeTest {
     public static void typechecks(final String program) throws TokenizerException, ParseException, TypeErrorException {
-        Typechecker.typecheckProgram(Parser.parse(Tokenizer.tokenize(program)));
+        Typechecker.typecheckProgramForTesting(Parser.parse(Tokenizer.tokenize(program)));
     }
     @Test
     public void testVariableDefinitionAndUse() throws TokenizerException, ParseException, TypeErrorException {

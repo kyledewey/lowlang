@@ -153,3 +153,16 @@ program ::= structDec* fDef*
 - PrintToken: 28
 - LeftCurlyBraceToken: 29
 - RightCurlyBraceToken: 30
+
+# Running the Compiler
+
+```console
+mvn exec:java -Dexec.mainClass="lowlang.Compiler" -Dexec.args="examples/perimeter.lowlang output.asm"
+spim -quiet -file output.asm
+```
+
+# Running End-to-End Tests
+
+```console
+mvn test
+```
